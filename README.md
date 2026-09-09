@@ -6,8 +6,8 @@ subagents, a rule, an `AGENTS.md`, a privacy hook, and MCP/CLI config — into t
 `.cursor/` (plus a root `AGENTS.md`).
 
 Covers three engineering archetypes: `fe-nx`, `nestjs-graphql`, `design-system`. Behavior —
-detection, manifest tracking, pruning, exports — is driven by a bundled scaffolding engine
-(vendored at `vendor/kit-core/`).
+detection, manifest tracking, pruning, exports — is driven by the scaffolding engine at
+`src/scaffold-core/`.
 
 Built for Kmart/Target AU monorepos but generic enough for any TypeScript project.
 
@@ -27,7 +27,7 @@ Requires Node ≥ 20.
 
 ```bash
 git clone <this-repo-url> ko-dev-kit
-cd ko-dev-kit && npm install && npm link
+cd ko-dev-kit && pnpm install && pnpm link --global
 ```
 
 ## Usage
@@ -230,9 +230,9 @@ with your existing rules.
 ## Develop
 
 ```bash
-npm install
-npm test          # vitest: detection, consistency
-npm run test:watch
+pnpm install
+pnpm test          # vitest: detection, consistency
+pnpm test:watch
 ```
 
 Templates live in `templates/`. Add a resource there and, if it's archetype-specific, register it
@@ -248,7 +248,8 @@ ko-dev-kit/
 ├── src/
 │   ├── detect.js        # Archetype detection logic (fe-nx, nestjs-graphql, design-system)
 │   ├── init.js           # init/prune command orchestration
-│   └── scaffold.js       # ARCHETYPE_RESOURCES map + thin wrapper over kit-core's engine
+│   ├── scaffold.js       # ARCHETYPE_RESOURCES map + thin wrapper over scaffold-core's engine
+│   └── scaffold-core/    # Generic scaffolding engine: frontmatter, manifest, engine, export
 ├── templates/
 │   ├── agents/           # Subagent definitions (5 agents)
 │   ├── agents-md/        # AGENTS.md templates per archetype (3 files)

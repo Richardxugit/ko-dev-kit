@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import prompts from 'prompts';
-import { readManifest, writeManifest, pruneOrphans } from 'kit-core';
+import { readManifest, writeManifest, pruneOrphans } from './scaffold-core/index.js';
 import { detectArchetype, ARCHETYPES } from './detect.js';
 import { scaffoldProject, pruneProject, getMcpSuggestions, MANIFEST_REL_PATH } from './scaffold.js';
 

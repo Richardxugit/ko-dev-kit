@@ -5,7 +5,7 @@ import path from 'path';
 import { ARCHETYPES } from '../src/detect.js';
 import { ARCHETYPE_LABELS } from '../src/init.js';
 import { ARCHETYPE_RESOURCES, getCommandEntries, COMMAND_FOLDERS } from '../src/scaffold.js';
-import { parseFrontmatter } from 'kit-core';
+import { parseFrontmatter } from '../src/scaffold-core/index.js';
 
 const templateDir = path.resolve('templates');
 

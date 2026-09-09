@@ -6,14 +6,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import chalk from 'chalk';
 import prompts from 'prompts';
-import { parseFrontmatter } from 'kit-core';
+import { parseFrontmatter, exportCommand, exportPlugin } from '../src/scaffold-core/index.js';
 import { runInit, runPrune } from '../src/init.js';
 import {
   installResource, uninstallResource, installFolder, listAvailableResources,
   getCommandEntries, COMMAND_FOLDERS, MANIFEST_REL_PATH, ARCHETYPE_RESOURCES,
 } from '../src/scaffold.js';
 import { detectArchetype } from '../src/detect.js';
-import { exportCommand, exportPlugin } from 'kit-core';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_DIR = path.resolve(__dirname, '..', 'templates');

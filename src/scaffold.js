@@ -1,6 +1,6 @@
 // ko-dev-kit/src/scaffold.js
 import path from 'path';
-import * as engine from 'kit-core';
+import * as engine from './scaffold-core/index.js';
 
 export const COMMAND_FOLDERS = ['dev'];
 

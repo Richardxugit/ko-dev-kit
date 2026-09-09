@@ -1,4 +1,4 @@
-// packages/kit-core/src/manifest.js
+// ko-dev-kit/src/scaffold-core/manifest.js
 //
 // Each kit writes its own manifest at a caller-supplied relative path (e.g.
 // .cursor/.ko-dev-kit-manifest.json) so multiple kits can coexist in one

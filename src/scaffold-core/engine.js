@@ -1,4 +1,4 @@
-// packages/kit-core/src/scaffold-engine.js
+// ko-dev-kit/src/scaffold-core/engine.js
 import fs from 'fs-extra';
 import path from 'path';
 import { parseFrontmatter } from './frontmatter.js';

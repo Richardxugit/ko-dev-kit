@@ -1,4 +1,4 @@
-// src/frontmatter.js
+// ko-dev-kit/src/scaffold-core/frontmatter.js
 //
 // YAML frontmatter parsing for kit templates (commands, agents, skills).
 //
