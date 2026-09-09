@@ -1,0 +1,131 @@
+---
+description: NestJS + GraphQL (Apollo Federation) conventions
+globs: apps/**/*.ts,libs/**/*.ts,workers/**/*.ts,src/**/*.ts
+alwaysApply: false
+---
+
+# NestJS + GraphQL Rules
+
+## Monorepo structure
+- This is a NestJS CLI monorepo (managed by `nest-cli.json`), NOT NX.
+- `apps/` holds NestJS services — each is a GraphQL Federation subgraph with its own port.
+- `libs/` holds shared libraries imported as `@kodekosmos/<name>` (or the repo's configured scope).
+- `workers/` holds AWS Lambda functions (Serverless Framework v3, Node 20, arm64).
+- `config/apps.json` is the service registry (name, port, start command).
+- Build individual apps: `nest build <app-name>`. Start all: `node scripts/start-dev.js`.
+
+## Module structure
+- Organize by feature within each app: `apps/<app>/src/<feature>/`.
+- A feature module contains: `<feature>.module.ts`, `<feature>.resolver.ts`, `<feature>.service.ts`, `entities/`, and `dto/` (inputs + args).
+- Register providers, resolvers, and imports in the feature's `@Module({})`. Export only what other modules consume.
+- Keep `AppModule` thin: wire global modules (`ConfigModule`, `GraphQLModule`) and import feature modules.
+
+## Dependency injection
+- Inject dependencies through the constructor. Never instantiate services with `new`.
+- Mark injected params `private readonly`.
+- Use providers for services, repositories, DataLoaders, and clients. Prefer interface-based tokens (`@Inject('TOKEN')`) when swapping implementations matters.
+
+## DTOs and validation
+- Define GraphQL inputs as `@InputType()` classes; decorate fields with `class-validator`.
+- Enable global `ValidationPipe({ whitelist: true, transform: true })`.
+- Never accept raw `any` shapes. Always go through a typed input DTO.
+
+## Code-first GraphQL & Federation
+- 100% code-first schema generation (`autoSchemaFile`). NO `.graphql` files.
+- Model types: `@ObjectType()` with `@Field()` per exposed property.
+- Resolvers: `@Resolver(() => Entity)`. Operations: `@Query()`, `@Mutation()`. Arguments: `@Args()`.
+- Use `@ResolveField()` for derived/related fields — always through a DataLoader.
+- **Federation**: Use `@Directive('@key(fields: "id")')` on entity types. Implement `@ResolveReference()` to resolve entities from other subgraphs.
+- Each subgraph owns its entities. Cross-subgraph references use `@Directive('@extends')` and `@Directive('@external')`.
+- Register unreferenced types in `buildSchemaOptions.orphanedTypes`.
+
+## Thin resolvers, fat services
+- Resolvers only: parse args, call a service method, return the result. No business logic, no direct DB access.
+- Services hold all business logic, orchestration, and data access.
+
+## Avoid N+1
+- Any `@ResolveField()` that loads a relation per parent must go through a per-request `DataLoader`.
+- Provide DataLoaders as request-scoped providers. Batch by key; never query inside a loop.
+
+## Configuration
+- Use `registerAs('scope', usingEnv(env => ({ ... })))` pattern for config modules. This fails fast with an aggregated error listing ALL missing env vars (not one at a time).
+- `env.getValue('KEY', 'default')` for optional vars with defaults.
+- `SSM_VAR_` prefixed env vars are resolved from AWS SSM Parameter Store at startup.
+- No secrets hard-coded. Use SSM Parameter Store for production, `.env.secret` (Ansible Vault encrypted) for local.
+- Decrypt locally with `scripts/crypt.js`. Never commit decrypted `.env.secret` files.
+
+## Authentication
+- Two-tier auth pattern:
+  - **Anonymous**: Commercetools token stored in encrypted cookie (`ko_token`). Issued on first request.
+  - **Authenticated**: Auth0 JWT verified via JWKS endpoint. Token passed in Authorization header.
+- Guards: `@UseGuards(GqlAuthGuard)` — validates JWT claims and extracts user context via `@CurrentUser()`.
+
+## Lambda workers
+- Workers in `workers/` are AWS Lambda functions using Serverless Framework v3 (Node 20, arm64).
+- Use `wrapLambda()` to cache the NestJS application context across warm invocations:
+  ```ts
+  let servicePromise: Promise<MyService>
+  export const handler: SQSHandler = wrapLambda(async event => {
+    if (!servicePromise) servicePromise = serviceGenerator()
+    const service = await servicePromise
+    await service.run(event)
+  })
+  ```
+- SSM env var resolution happens at Lambda cold start via the wrapper.
+- Each worker has `handler.ts`, `worker.module.ts`, `worker.service.ts`, and `serverless3.yml`.
+
+## Data stores
+- **DynamoDB** — primary data store. Use single-table design where appropriate. Access via AWS SDK v3 (`@aws-sdk/client-dynamodb`, `@aws-sdk/util-dynamodb`).
+- **Redis / Valkey** — caching layer (ioredis / iovalkey). Use for session data, rate limiting, and computed values with TTL.
+- **Elasticsearch 7.x** — geo search, postcode/location search. Use the official `@elastic/elasticsearch` client.
+- **PostgreSQL** — used by specific services (orders). Access via `pg` client.
+- **Kafka** — event streaming between services. Produce/consume via `kafkajs`.
+- **SQS/SNS** — async worker messaging. Workers consume SQS messages, services publish to SNS topics.
+
+## Logging
+- Use `KoLoggerService` from `@kodekosmos/logger` — **never `console.log`**. It's `@Global()` and available everywhere via DI.
+- Pass errors as structured properties:
+  ```ts
+  this.logger.log({ orderId, items: items.length }, 'Processing order')
+  this.logger.error({ err }, 'Failed to process order')
+  ```
+- First arg is the structured context object, second is the human-readable message.
+
+## Errors and exceptions
+- Throw `ApolloError`, `UserInputError`, `ValidationError` from `apollo-server-core` — not plain `Error`.
+- Use typed NestJS exceptions (`NotFoundException`, `BadRequestException`) for REST endpoints.
+- Use global exception filters. Do not leak stack traces in production.
+- Lambda workers: return structured error responses; never throw unhandled.
+
+## Testing
+- **Jest 30** with SWC transform (`@swc/jest`). Run tests with the repo's package manager (yarn in this family — the lockfile is the source of truth).
+- **Unit tests** (`.spec.ts`): Mock providers via `Test.createTestingModule`. No real DB/network.
+- **Test harness** (`.th.spec.ts`): Integration tests with a real NestJS app context but mocked external services.
+- **Consumer contract** (`.pact.ts`): Pact 13 tests verifying API contracts from the consumer perspective.
+- **Provider contract** (`.provider.pact.ts`): Pact verification that this service fulfills the contract.
+- Name tests as business rules: `'should return discounted price when customer has loyalty points'`
+- Test behaviour/outcomes, not implementation details. Mock only out-of-process boundaries.
+
+## Code style
+- **Prettier**: single quotes, no semicolons, trailing commas, 100-char width, `arrowParens: avoid`.
+- **ESLint**: `import/order` enforced, max 3 classes per file, `no-console: warn`.
+- Use `interface` for data shapes and service contracts; `type` for unions/aliases.
+- Avoid `any` — prefer `unknown` with narrowing. Avoid `!` assertions without justification.
+- Favour early returns over nested if/else.
+
+## Tooling
+- **yarn** is the package manager in this family (`yarn`, `yarn start:dev`, `yarn build`, `yarn test`, `yarn lint`) — the repo's lockfile is the source of truth if it differs.
+- `scripts/start-dev.js` — run all services with watch mode.
+- `scripts/crypt.js` — encrypt/decrypt env files (Ansible Vault).
+- Apollo Rover (`npx rover`) — schema check/publish/sync for Federation.
+- `yarn gen:worker` — scaffold a new Lambda worker.
+- Buildkite CI — pipelines in `.buildkite/pipelines/`.
+
+## Commit format
+- Only commit when in a git worktree. Otherwise leave changes for the user to commit.
+- Format: `type(scope): KOSM-XXXX: short message` — Conventional Commits with Jira ticket:
+  - With ticket: `feat(orders): KOSM-1234: add loyalty endpoint`
+  - Without ticket: `fix(catalogue): correct search pagination`
+- Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`, `build`, `revert`.
+- Scope is the app/lib/worker name (e.g. `orders`, `common`, `catalogue-sync`).
+- Enforced via Husky + commitlint. Use `git cz` (Commitizen) for interactive commit prompt.

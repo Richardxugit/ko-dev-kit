@@ -1,0 +1,96 @@
+---
+description: Frontend Nx monorepo conventions
+globs: apps/**/*.{ts,tsx},libs/**/*.{ts,tsx},packages/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend Nx Monorepo Rules
+
+## Project layout
+- `apps/` holds deployable applications (thin shells). They wire packages together, own routing/bootstrap, and contain as little logic as possible.
+- `packages/` holds shared UI components, hooks, utilities, and data access layers. No build step — consumed via TS path aliases + `transpilePackages` in `next.config.js`.
+- Apps depend on packages; packages never import from apps. No cross-app imports — shared code must live in `packages/`.
+
+## Package conventions
+Packages under `packages/` are PascalCase directories (e.g. `Button`, `Header`, `ProductTile`). Each package has:
+- `project.json` with `name: PascalCase`, targets: `lint` + `test` only (NO build target).
+- `vitest.config.ts` (`pool: vmThreads`, `testTimeout: 30000`, `include: src/**/*.vitest.{ts,tsx}`).
+- `src/index.ts` barrel (default export + named re-exports).
+- `src/<Name>.tsx`, `src/<Name>.styled.ts`, `src/<Name>.vitest.tsx`, `src/<Name>.stories.tsx`.
+
+Two path alias patterns in `tsconfig.base.json`:
+- UI packages: `@kmartau/ko-ui-<lowercase>` → `packages/<PascalCase>/src/index.ts`
+- Infra/utility packages: `@ko-ui-lib/<name>` → `packages/<Name>/src/index.ts`
+
+## Module boundaries
+- `@nx/enforce-module-boundaries` is **disabled** in this repo. Module boundaries are convention-only:
+  - Apps import from packages; packages never import from apps.
+  - No cross-app imports — shared code must live in `packages/`.
+  - Packages should not create circular dependencies.
+- Use existing path aliases; never create new ones without adding them to `tsconfig.base.json`.
+
+## Imports & path aliases
+- Import shared code through TS path aliases defined in `tsconfig.base.json` (e.g. `@kmartau/ko-ui-button`, `@ko-ui-lib/datalayer`), never by deep relative path (`../../../packages/Button/src/...`).
+- The repo has ~127 path aliases. Always use existing aliases; never create new ones without justification.
+- Each package exposes its API through a barrel `src/index.ts`. Anything not exported is private.
+
+## Next.js routing
+- **Pages Router is primary.** Most apps (home-ui, product-discovery-ui, careers-ui, wishlist-ui, order-tracking-ui) use the Pages Router with `getServerSideProps` and `getInitialProps`.
+- App Router is used only in `product-discovery-ui/src/app/` for `/search/*` and `/shop/*` routes. It is NOT the default for new pages.
+- When adding new pages, check which router the target app uses. Default to Pages Router unless the app already has an `app/` directory for that route segment.
+- There is NO ISR (`getStaticProps` with `revalidate`). Use in-process `cacheInstance` with TTL for shared data that doesn't need to be fresh every request.
+- See the `nextjs-pages-router` skill for Pages Router patterns (getServerSideProps, _app.tsx, _document.tsx, Apollo SSR, in-process caching).
+
+## Styled-components convention
+- Co-locate styles in `<Name>.styled.ts`. Export named styled components.
+- Import styled components into the main component file: `import * as S from './<Name>.styled'` or named imports.
+- Never inline `styled()` calls inside render. Define them at module scope.
+- Use `$`-prefix for transient props (e.g. `$isActive`, `$variant`) so they don't leak to the DOM.
+- Use `theme` from the ThemeProvider for colors, spacing, and typography — never hardcode pixel values or hex colors. Access via `${({ theme }) => theme.breakpoints.up('md')}` / `theme.palette.*`.
+- The repo uses a dual ThemeProvider (styled-components + MUI v4) with a shared `CustomTheme` object from `@kmartau/ko-ui-theme`.
+
+## Apollo Client & GraphQL
+- Module-level singleton Apollo Client instance (NOT created per-request in SSR).
+- `ApolloLink.split()` routes requests: set `context: { clientName: 'contentful' }` for CMS queries (routes to Contentful endpoint), otherwise queries hit the GraphQL gateway.
+- GraphQL queries/mutations live in a dedicated `graphql/` or `queries/` directory within each app or package.
+- Use the `fetchtypes` NX executor target to regenerate TypeScript types from the GraphQL schema. Run it before modifying queries: `pnpm nx fetchtypes <project>`.
+- Prefer `useQuery`/`useMutation` hooks with typed generated hooks. Never use untyped `gql` template literals without codegen.
+- Apollo cache is the source of truth for server state. Do not duplicate fetched data into local React state.
+
+## Testing
+- New tests use Vitest with `*.vitest.tsx` naming. Existing `*.test.tsx` files use Jest (legacy).
+- Pact contract tests use `*.pact.ts` naming — they verify the contract between this frontend and backend APIs.
+- Co-locate tests next to the component/module they cover (e.g. `<Name>.vitest.tsx` beside `<Name>.tsx`).
+- Use `@ko-ui-lib/test-utils` `render` for component tests — it wraps with Theme + MaterialTheme + AddToCartNotificationProvider. Use `@testing-library/react` directly when you need Apollo or complex provider setups.
+- Test user behavior, not implementation. Query by role/label (`getByRole`, `getByLabelText`), not by test id. Use `userEvent` (not `fireEvent`).
+- Prefer `vi.mock()` (Vitest) or `jest.mock()` (Jest) only for out-of-process boundaries (API calls, third-party services).
+- Mock `next/router` and `next/config` via `vi.mock()` in tests.
+
+## Storybook
+- Storybook 9.1 with stories glob: `../packages/**/*.stories.@(tsx|js)`.
+- Stories use **CSF 1** format (addon-knobs, `.story` property). Do NOT use CSF 3 (Meta/StoryObj/args).
+- Addons: `addon-knobs`, `addon-a11y`, `storybook-addon-designs` (Figma), `storybook-addon-playroom`.
+- Global decorator wraps all stories in `<Theme>` from `@kmartau/ko-ui-theme` — stories do not need their own ThemeProvider.
+- Visual regression testing via Chromatic.
+
+## Build & tooling
+- TypeScript everywhere; `strict: true` in `tsconfig.base.json`. No implicit `any`, no non-null `!` to silence the compiler.
+- NX orchestrates builds: `pnpm nx <target> <project>`. Use `pnpm nx affected -t build test lint` in CI.
+- pnpm manages dependencies. Single lockfile at root. Add deps with `pnpm add`.
+- Encrypted env files managed via `scripts/crypt.js` (Ansible Vault). Never commit decrypted `.env.secret`.
+
+## CI & caching
+- Use `pnpm nx affected -t build test lint` in CI so only projects touched by a change run.
+- NX Cloud provides distributed computation caching. Keep targets deterministic (no wall-clock/network reads in build inputs).
+- Buildkite is the CI platform. Pipeline config lives in `.buildkite/`.
+- Lighthouse CI runs performance budgets on product-discovery-ui.
+
+## Commit format
+- Only commit when in a git worktree. Otherwise leave changes for the user to commit.
+- Format: `type [TICKET]: short message` (ticket in square brackets, before the colon):
+  - With ticket: `feat [KO-1234]: add wishlist page` (header ≤ 72 chars)
+  - Without ticket: `fix: correct price display`
+- Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`, `build`, `revert`.
+  - Note: `perf` is NOT a valid type in this repo's commitlint config.
+- Prefix: `KO` (has-jira-issue is a commitlint warning by default; error only when `STRICT=true`). PR titles follow the same format; `npx cz` for interactive commits.
+- Enforced via Husky (pre-commit: lint-staged, commit-msg: commitlint, pre-push: audit).

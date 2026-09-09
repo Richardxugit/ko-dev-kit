@@ -1,0 +1,108 @@
+---
+description: Design system (MUI v6, multi-brand, Storybook) conventions
+globs: src/**/*.{ts,tsx},*.stories.{ts,tsx}
+alwaysApply: false
+---
+
+# Design System Rules
+
+## Multi-brand theming
+- This is a multi-brand design system. The `THEME` env var (`kmart` | `target` or similar) determines which brand bundle is produced at compile time.
+- Brand-specific tokens live in `src/configs/<brand>/tokens/` — palette, spacing, radius, breakpoints, typography, animation, and component-specific tokens.
+- Raw hex/RGB values are BANNED outside config token files. Always reference tokens via the theme.
+- Two separate builds ship as different package export subpaths (e.g. `.` for primary brand, `./<brand>` for secondary).
+
+## ThemeWrapper pattern
+- Every component wraps in a `<ThemeWrapper>` that injects the correct brand theme.
+- `ThemeWrapper` detects whether a Kosmos theme is already in the React tree via a `__KOSMOS_brand` marker on the theme object. If present, it skips wrapping (avoids double-wrap).
+- Never manually provide the MUI `ThemeProvider` in component code — always use `ThemeWrapper`.
+
+## MUI v6 wrapper pattern
+- Components wrap MUI components, restricting the API surface using `OmitKeys<MuiProps, ...>`.
+- Expose a simpler, branded prop interface (e.g. `variant: "filled" | "outlined"` instead of MUI's full variant set).
+- The MUI class prefix is `kosmos-ds-` to avoid style collisions with consumer apps.
+
+## Component structure
+- Components live at `src/components/ui/<category>/<component>/` with a standard 6-file structure:
+  - `<Component>.tsx` — implementation
+  - `<Component>.test.tsx` — unit tests
+  - `<Component>.a11y.tsx` — accessibility tests (vitest-axe)
+  - `<Component>.stories.tsx` — Storybook stories
+  - `<Component>.mdx` — documentation
+  - `index.ts` — barrel export
+- A component is NOT public until exported from `src/components/ui/latest.ts`.
+
+## Breaking changes
+- Use version suffixes for breaking changes: `ButtonV3`, `CardV2` — not breaking existing APIs.
+- Deprecated components remain available but marked with `@deprecated` JSDoc and console warnings in dev.
+- Never remove a public component without a migration guide and at least one major version notice.
+
+## Strict code quality
+- ESLint enforces: complexity ≤ 8, max-statements ≤ 10, max-depth ≤ 3.
+- If your code exceeds these limits, decompose it into smaller functions or components. Do not disable the rule.
+- Prefer composition (children, slots, render props) over complex conditional rendering.
+
+## Bundling
+- tsup (esbuild) bundles the library. Every entry point includes a `"use client"` banner for Next.js RSC compatibility.
+- Do not use Node.js-only APIs (fs, path, etc.) in component code — it must run in both server and client contexts.
+- Tree-shaking must work: use named exports, avoid side effects at module scope.
+
+## Available libraries
+- **Radix UI** (`@radix-ui/react-select`) — headless primitives for complex interactions (select, dropdown). Use when MUI's component doesn't fit or needs deeper customization.
+- **lucide-react** — standard icon set. Use for generic icons. Brand-specific icons go in `src/components/ui/custom-icons/`.
+- **embla-carousel-react** — carousel/slider engine. Used by carousel components.
+- **Emotion** (`@emotion/styled`, `@emotion/react`, `@emotion/cache`) — MUI's styling engine. Direct usage is fine for component styling alongside `sx`.
+
+## Plop scaffolding
+- Use `pnpm plop` to generate new components with the standard 6-file template.
+- The Plop generator ensures consistent naming, directory structure, and boilerplate.
+- After scaffolding, add the component export to `src/components/ui/latest.ts` once it's ready for consumers.
+
+## Testing
+- **Unit tests** (`*.test.tsx`): Use `@testing-library/react` with `userEvent`. Vitest globals enabled (no imports for `describe`, `test`, `expect`, `vi`).
+- **A11y tests** (`*.a11y.tsx`): Separate file using `vitest-axe`. Every component must have one.
+- **Emotion test helper**: Wrap renders in `withEmotion()` from `src/utils/test-helper/emotion-query.tsx` for inspectable styles. Call `cleanUpEmotionStyles()` in `afterEach`.
+- `vitest.setup.js` mocks `window.matchMedia`, `IntersectionObserver`, `ResizeObserver`, and `HTMLCanvasElement.getContext`.
+
+## Theming — never hardcode
+- Pull design values from the theme via `sx` prop, `styled()`, or `useTheme()`.
+- Spacing uses the theme spacing scale (`theme.spacing(n)` / `sx` shorthand).
+- Add new colors/typography/radii as tokens in the brand config, then reference them.
+
+## Variants & styling
+- Implement visual variants through theme `components[X].variants` and `styleOverrides`.
+- Expose variants as a typed `variant` prop (string union).
+- Tailwind CSS 3.4 is available alongside Emotion for utility styling — prefer theme tokens where possible.
+
+## Refs & controlled components
+- Apply `forwardRef` to every interactive or focusable component.
+- Forward the ref to the underlying DOM node. Type it explicitly (`forwardRef<HTMLButtonElement, ButtonProps>`).
+- Support both controlled (`value` + `onChange`) and uncontrolled (`defaultValue`) modes.
+
+## Prop API
+- Keep prop APIs clear, minimal, and well-typed. Prefer composition over configuration.
+- Prefer `variant`/`size`/`color` unions over boolean flags.
+- Extend underlying element props (`React.ComponentPropsWithoutRef<'button'>`) so consumers can pass `aria-*`, `data-*`, `id`.
+- Provide sensible defaults for the common case.
+
+## Stories
+- One Storybook story file per component, co-located.
+- Use CSF3 (`Meta` / `StoryObj`), `tags: ['autodocs']`.
+- Cover all states: default, hover/focus, loading, error, disabled, empty, and each brand variant.
+- Storybook 10 with `@storybook/nextjs` framework.
+
+## Accessibility
+- Correct semantic roles and accessible names on every interactive element.
+- Full keyboard operability with visible focus indicators.
+- Meet WCAG 2.2 AA (contrast, target size, focus-not-obscured). See the `wcag-2.2-aa` skill.
+- vitest-axe must pass for each component's a11y test file.
+
+## Public API
+- Export through `src/components/ui/latest.ts` (the public barrel). Only export consumer-ready components.
+- Export component types alongside components (`export type { ButtonProps }`).
+- Keep internals out of the public barrel.
+
+## Versioning
+- semantic-release with Conventional Commits: `feat(button):`, `fix(theme):`, etc.
+- BREAKING CHANGE footer triggers major version bump.
+- Publish to GitHub Packages as `@kmartau/kosmos-ds.react-components` (or the configured scope).
