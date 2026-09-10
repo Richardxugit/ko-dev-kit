@@ -100,13 +100,24 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
     created, skipped
   );
 
-  if (targets.length > 0) {
+  if (targets.length === 1) {
     await copyIfNotExists(
       path.join(templateDir, 'project-context', `${targets[0]}.md`),
       path.join(projectDir, 'AGENTS.md'),
       'AGENTS.md',
       created, skipped
     );
+  } else if (targets.length > 1) {
+    // Multi-archetype: no single template can describe the repo, and pre-filled
+    // archetype content would be wrong. Write a minimal skeleton instead —
+    // /ko-onboard explores the real repo and generates the actual AGENTS.md.
+    const dest = path.join(projectDir, 'AGENTS.md');
+    if (!await fs.pathExists(dest)) {
+      await fs.writeFile(dest, multiArchetypeContext(targets));
+      created.push('AGENTS.md');
+    } else {
+      skipped.push('AGENTS.md');
+    }
   }
 
   await copyIfNotExists(
@@ -339,6 +350,25 @@ export async function installResource(projectDir, type, name, templateDir, optio
  * manifest (i.e. the user never touched it). Otherwise the kit version is
  * written to <file>.kit-update and the user merges manually — their edits win.
  */
+function multiArchetypeContext(targets) {
+  const ruleRefs = targets.map(a => `- \`.cursor/rules/${a}.mdc\``).join('\n');
+  return `<!-- ko-dev-kit-template -->
+# AGENTS.md
+
+This file provides project context for AI coding agents working in this repository.
+
+## Project type: multi-archetype repo
+
+Detected archetypes: **${targets.join(' + ')}**. Binding conventions live in the rules —
+read all of them before editing:
+${ruleRefs}
+- \`.cursor/rules/coding-standards.mdc\` (always applied)
+
+<!-- run /ko-onboard — it explores the real repo and replaces this skeleton with the
+actual structure, stack, commands, and conventions for every stack present -->
+`;
+}
+
 async function copyRuleProtected(src, dest, relPath, manifest, created, updated, mergeNeeded) {
   if (!await fs.pathExists(src)) return;
   if (!await fs.pathExists(dest)) {
