@@ -5,7 +5,7 @@ description: The AI-DLC unit-of-work artifact — the stories.md format, phase/s
 
 # Unit of Work
 
-A **unit of work** is the persistent artifact connecting the AI-DLC phases, and it is the same `stories.md` the product pipeline produces: `/ko-slice` creates it (story skeletons), `/ko-groom` deepens it to Definition-of-Ready, construction executes its stories in **bolts** (short focused work bursts — the AI-DLC replacement for sprints), operations closes it out. One file, start to finish — it lives in the repo so any session, human or agent, can pick up exactly where the last one stopped.
+A **unit of work** is the persistent artifact connecting the AI-DLC phases, and it is the same `stories.md` the product pipeline produces when installed (ko-product-kit): `/ko-slice` creates it (story skeletons), `/ko-groom` deepens it to Definition-of-Ready, construction executes its stories in **bolts** (short focused work bursts — the AI-DLC replacement for sprints), operations closes it out. One file, start to finish — it lives in the repo so any session, human or agent, can pick up exactly where the last one stopped.
 
 ## Location & discovery
 

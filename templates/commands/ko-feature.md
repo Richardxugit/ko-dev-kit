@@ -63,7 +63,7 @@ If anything is found, list it and ask the user: resume from it, delete it, or ig
 List `.cursor/rules/` to identify which archetype rule is present:
 - `fe-nx.mdc` → Frontend Nx monorepo (Nx + React)
 - `nestjs-graphql.mdc` → NestJS + Apollo GraphQL (+ Lambda workers)
-- `e2e-playwright.mdc` → Playwright BDD end-to-end tests
+- `e2e-playwright.mdc` → Playwright BDD end-to-end tests (if installed — shipped by ko-qa-kit, not this kit)
 - `design-system.mdc` → Storybook + MUI component library
 
 ## Step 2: Load Context

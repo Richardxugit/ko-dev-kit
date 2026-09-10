@@ -39,7 +39,7 @@ pnpm nx g @nx/react:component OrderCard --project=orders-ui --export
 pnpm nx g @nx/react:lib orders-ui --dry-run
 ```
 
-Prefer `--dry-run` first on anything that touches multiple files. Use `/ko-lib` for the
+Prefer `--dry-run` first on anything that touches multiple files. Use `/ko-lib-package` for the
 guided library workflow.
 
 ## affected

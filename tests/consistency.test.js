@@ -114,6 +114,78 @@ describe('anti-overengineering rules', () => {
   });
 });
 
+describe('cross-kit reference lint', () => {
+  // Commands/rules referenced in templates but shipped by OTHER kits.
+  // Each must be guarded in the text ("if installed", "ko-product-kit", ...).
+  const EXTERNAL_COMMANDS = new Set(['ko-slice', 'ko-groom', 'ko-e2e-test', 'ko-e2e-heal']);
+  const EXTERNAL_RULES = new Set(['e2e-playwright']);
+
+  const templateFiles = fs.readdirSync(path.join(templateDir, 'commands'))
+    .filter(f => f.endsWith('.md'))
+    .map(f => path.join(templateDir, 'commands', f));
+  // include skills + rules bodies
+  for (const dir of ['skills', 'rules', 'agents']) {
+    const base = path.join(templateDir, dir);
+    for (const f of fs.readdirSync(base, { recursive: true })) {
+      const full = path.join(base, String(f));
+      if (/\.(md|mdc)$/.test(String(f)) && fs.statSync(full).isFile()) templateFiles.push(full);
+    }
+  }
+
+  const shippedCommands = new Set(getCommandEntries(templateDir).map(e => e.name));
+  const shippedRules = new Set(fs.readdirSync(path.join(templateDir, 'rules')).map(f => f.replace(/\.mdc$/, '')));
+
+  it('every /ko-* reference is shipped by this kit or a known external', () => {
+    for (const file of templateFiles) {
+      const content = fs.readFileSync(file, 'utf-8');
+      const refs = content.match(/(?<![\w/@-])\/(ko-[a-z][a-z0-9-]*)/g) ?? [];
+      for (const ref of refs) {
+        const name = ref.slice(1);
+        const ok = shippedCommands.has(name) || EXTERNAL_COMMANDS.has(name);
+        expect(ok, `${path.relative(templateDir, file)} references unknown command ${ref} — ship it, or whitelist + guard it as external`).toBe(true);
+      }
+    }
+  });
+
+  it('every *.mdc reference is shipped by this kit or a known external', () => {
+    for (const file of templateFiles) {
+      const content = fs.readFileSync(file, 'utf-8');
+      const refs = content.match(/(?<![\w/@-])([a-z0-9][a-z0-9-]*)\.mdc/g) ?? [];
+      for (const ref of refs) {
+        const name = ref.replace(/\.mdc$/, '');
+        const ok = shippedRules.has(name) || EXTERNAL_RULES.has(name);
+        expect(ok, `${path.relative(templateDir, file)} references unknown rule ${ref}`).toBe(true);
+      }
+    }
+  });
+
+  it('external references are guarded as conditional in the text', () => {
+    const GUARD = /if installed|when installed|ko-product-kit|ko-qa-kit|not this kit/i;
+    for (const file of templateFiles) {
+      const content = fs.readFileSync(file, 'utf-8');
+      const fileLevelGuard = GUARD.test(content); // file declares conditionality once (e.g. format spec of an external pipeline)
+      const lines = content.split('\n');
+      lines.forEach((line, i) => {
+        for (const ext of [...EXTERNAL_COMMANDS]) {
+          const re = new RegExp(`(?<![\\w/@-])/${ext}([.\\s]|$)`);
+          if (!re.test(line)) continue;
+          // allow format-spec examples (tables/bolt logs) — the section header carries the guard
+          const section = lines.slice(0, i + 1).reverse().find(l => l.startsWith('#')) ?? '';
+          const guarded = fileLevelGuard || GUARD.test(line) || GUARD.test(section) || GUARD.test(lines.slice(Math.max(0, i - 3), i + 1).join(' '));
+          expect(guarded, `${path.relative(templateDir, file)}:${i + 1} references external "/${ext}" without an "if installed" guard`).toBe(true);
+        }
+        // rules: only the explicit `.mdc` form needs a guard (bare archetype names in
+        // skip-logic like "Skip for nestjs-graphql, e2e-playwright" are harmless)
+        for (const ext of [...EXTERNAL_RULES]) {
+          if (!line.includes(`${ext}.mdc`)) continue;
+          const guarded = fileLevelGuard || GUARD.test(line) || GUARD.test(lines.slice(Math.max(0, i - 3), i + 1).join(' '));
+          expect(guarded, `${path.relative(templateDir, file)}:${i + 1} references external "${ext}.mdc" without an "if installed" guard`).toBe(true);
+        }
+      });
+    }
+  });
+});
+
 describe('kit-wide staleness lint (dev-kit slice)', () => {
   const BANNED = [
     { name: 'ko-inception (removed command)', re: /ko-inception/ },

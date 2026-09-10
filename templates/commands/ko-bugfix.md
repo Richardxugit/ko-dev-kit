@@ -18,7 +18,7 @@ You are fixing a bug in this project. Follow these steps:
 List `.cursor/rules/` to identify the archetype:
 - `fe-nx.mdc` → Frontend Nx monorepo
 - `nestjs-graphql.mdc` → NestJS + Apollo GraphQL
-- `e2e-playwright.mdc` → Playwright BDD e2e tests
+- `e2e-playwright.mdc` → Playwright BDD e2e tests (if installed — shipped by ko-qa-kit, not this kit)
 - `design-system.mdc` → Storybook + MUI component library
 
 Load the archetype rules, `AGENTS.md`, and testing setup.

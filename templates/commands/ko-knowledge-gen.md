@@ -102,7 +102,7 @@ Analyze the codebase and generate topic-scoped markdown documents in `.cursor/kn
 
 1. If `.cursor/rules/nestjs-graphql.mdc` exists → **nestjs-graphql**
 2. If `.cursor/rules/fe-nx.mdc` exists → **fe-nx**
-3. If `.cursor/rules/e2e-playwright.mdc` exists → **e2e-playwright**
+3. If `.cursor/rules/e2e-playwright.mdc` exists → **e2e-playwright** (ko-qa-kit repos)
 4. If `.cursor/rules/design-system.mdc` exists → **design-system**
 5. If no rules found, detect from codebase:
    - `@nestjs/core` dependency → **nestjs-graphql**
@@ -250,7 +250,7 @@ Adapt to what the codebase actually contains. Skip topics that don't apply. Add 
 | `04-a11y.md` | Accessibility | Read when modifying a11y patterns or audit approach | WCAG 2.2 AA patterns, keyboard/focus/ARIA conventions, axe + a11y addon usage | 200-400 lines |
 | `05-build-publish.md` | Build & Publish | Read when changing build, exports, or versioning | Package build, entry points/exports map, versioning, release process | 150-300 lines |
 
-### e2e-playwright
+### e2e-playwright (if installed — ko-qa-kit repos)
 
 | File | Topic | Description | What to Include | Target Size |
 |------|-------|-------------|-----------------|-------------|

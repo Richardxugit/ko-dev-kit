@@ -21,7 +21,7 @@ Used by the `--fast` feature profile or on request. Run only: Step 1 (scope), St
 1. List `.cursor/rules/` to detect archetype:
    - `nestjs-graphql.mdc` → **nestjs-graphql**
    - `fe-nx.mdc` → **fe-nx**
-   - `e2e-playwright.mdc` → **e2e-playwright**
+   - `e2e-playwright.mdc` → **e2e-playwright** (if installed — shipped by ko-qa-kit, not this kit)
    - `design-system.mdc` → **design-system**
    - None → **generic**
 
@@ -106,7 +106,7 @@ Run `pnpm nx affected -t test` (or the test script) and report results.
 | **axe a11y** | Every component test includes an axe check | Grep for `toHaveNoViolations` / `axe(` |
 | **Stories** | New/changed components have `.stories.tsx` covering key states | Check for co-located stories |
 
-### e2e-playwright
+### e2e-playwright (if installed — ko-qa-kit repos)
 
 | Test Type | What to Check | How to Check |
 |-----------|--------------|--------------|
