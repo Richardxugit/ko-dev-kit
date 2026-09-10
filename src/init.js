@@ -16,6 +16,8 @@ export const ARCHETYPE_LABELS = {
   'fe-nx': 'Frontend Nx Monorepo (TypeScript + pnpm + webpack)',
   'nestjs-graphql': 'NestJS + GraphQL Service (Apollo)',
   'design-system': 'Design System (Storybook + Material UI)',
+  'nextjs-app': 'Standalone Next.js App',
+  'react-app': 'Standalone React App (Vite/CRA/SPA)',
 };
 
 const describeArchetypes = (archetypes) =>

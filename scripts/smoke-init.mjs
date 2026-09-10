@@ -34,6 +34,24 @@ const FIXTURES = [
     reject: ['.cursor/commands/ko-feature.md', '.cursor/commands/ko-svc-lib.md'],
   },
   {
+    name: 'nextjs-app',
+    files: { 'package.json': { dependencies: { next: '^15.0.0', react: '^19.0.0' } } },
+    expect: ['.cursor/rules/nextjs-app.mdc', '.cursor/commands/ko-feature.md', '.cursor/skills/nextjs-app-router/SKILL.md', '.cursor/agents/frontend-developer.md'],
+    reject: ['.cursor/commands/ko-lib-package.md', '.cursor/rules/fe-nx.mdc', '.cursor/rules/react-app.mdc', '.cursor/skills/nx-monorepo/SKILL.md'],
+  },
+  {
+    name: 'react-app',
+    files: { 'package.json': { dependencies: { react: '^19.0.0', 'react-dom': '^19.0.0' } } },
+    expect: ['.cursor/rules/react-app.mdc', '.cursor/commands/ko-spike.md', '.cursor/skills/ts-react-patterns/SKILL.md'],
+    reject: ['.cursor/rules/nextjs-app.mdc', '.cursor/skills/nextjs-app-router/SKILL.md', '.cursor/commands/ko-svc-lib.md'],
+  },
+  {
+    name: 'nestjs-graphql,react-app', // React + Nest full-stack repo
+    files: { 'package.json': { dependencies: { '@nestjs/core': '^10.0.0', react: '^19.0.0' } }, 'nest-cli.json': {} },
+    expect: ['.cursor/rules/nestjs-graphql.mdc', '.cursor/rules/react-app.mdc', '.cursor/commands/ko-svc-lib.md', '.cursor/agents/frontend-developer.md', '.cursor/agents/backend-developer.md'],
+    reject: ['.cursor/rules/fe-nx.mdc', '.cursor/commands/ko-ds-component.md'],
+  },
+  {
     name: 'fe-nx,nestjs-graphql', // multi-archetype monorepo
     files: { 'package.json': { dependencies: { '@nestjs/core': '^10.0.0' } }, 'nest-cli.json': {}, 'nx.json': {} },
     expect: ['.cursor/rules/fe-nx.mdc', '.cursor/rules/nestjs-graphql.mdc', '.cursor/commands/ko-lib-package.md', '.cursor/commands/ko-svc-lib.md'],

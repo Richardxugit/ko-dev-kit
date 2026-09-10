@@ -1,0 +1,25 @@
+---
+description: Standalone Next.js app conventions (App Router and Pages Router)
+globs: app/**/*.{ts,tsx},pages/**/*.{ts,tsx},src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Next.js App Rules
+
+## Router awareness
+- Detect which router this repo uses before writing routing code: `app/` directory → App Router; `pages/` → Pages Router. Match the existing one — do not mix.
+- **App Router**: Server Components by default; `'use client'` only at the leaves that need interactivity. Data fetching in Server Components or Route Handlers, not `getServerSideProps`.
+- **Pages Router**: data fetching via `getServerSideProps` / `getStaticProps`; no Server Components.
+
+## Project layout
+- Routes in `app/` or `pages/`; shared UI in `components/`; server-only code never imported from client components.
+- API routes (`app/api/` or `pages/api/`) are thin: validate input, call a service/lib function, shape the response.
+
+## Data & rendering
+- Choose the rendering mode per route deliberately (static / SSR / ISR / client) and be able to say why. Default to static when data allows.
+- Use `next/image` and `next/font` instead of raw `<img>` / CSS font-face when available.
+- Environment variables: `NEXT_PUBLIC_*` is client-visible — never put secrets in it.
+
+## Testing
+- Match the repo's runner (Vitest or Jest) + React Testing Library for components.
+- Mock the router with the repo's existing helper; do not hand-roll router mocks per test.
