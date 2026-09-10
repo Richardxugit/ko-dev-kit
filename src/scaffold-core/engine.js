@@ -26,7 +26,7 @@ const SKIP_PATTERNS = [
   '__pycache__',   // Python cache
   '.pyc',          // compiled Python
   'specs',         // .cursor/specs/ is user data, never overwrite
-  'ko-new-command', // manual-install only (via `ko-cursor-kit install command ko-new-command`)
+  'ko-new-command', // manual-install only (via `ko-dev-kit install command ko-new-command`)
 ];
 
 export async function scaffoldProject(projectDir, archetype, templateDir, resourceMap, options = {}) {
@@ -90,7 +90,7 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
   }
 
   await copyIfNotExists(
-    path.join(templateDir, 'hooks', 'hooks.json'),
+    path.join(templateDir, 'settings', 'hooks.json'),
     path.join(projectDir, '.cursor', 'hooks.json'),
     '.cursor/hooks.json',
     created, skipped
@@ -117,7 +117,7 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
     );
 
     await copyIfNotExists(
-      path.join(templateDir, 'agents-md', `${archetype}.md`),
+      path.join(templateDir, 'project-context', `${archetype}.md`),
       path.join(projectDir, 'AGENTS.md'),
       'AGENTS.md',
       created, skipped

@@ -1,4 +1,4 @@
-<!-- ko-cursor-kit-template -->
+<!-- ko-dev-kit-template -->
 # AGENTS.md
 
 This file provides project context for AI coding agents working in this repository.

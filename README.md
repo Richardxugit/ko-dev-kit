@@ -250,7 +250,7 @@ ko-dev-kit/
 │   └── scaffold-core/    # Generic scaffolding engine: frontmatter, manifest, engine, export
 ├── templates/
 │   ├── agents/           # Subagent definitions (5 agents)
-│   ├── agents-md/        # AGENTS.md templates per archetype (3 files)
+│   ├── project-context/  # AGENTS.md templates per archetype (3 files)
 │   ├── commands/         # Slash command definitions (18 commands)
 │   ├── hooks/            # Privacy hook script + config
 │   ├── rules/            # .mdc rule files (4 rules)

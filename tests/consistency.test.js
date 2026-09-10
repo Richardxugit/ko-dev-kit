@@ -51,7 +51,7 @@ describe('archetype consistency', () => {
   it('every archetype has a rule and an AGENTS.md template', () => {
     for (const archetype of ARCHETYPES) {
       expect(fs.pathExistsSync(path.join(templateDir, 'rules', `${archetype}.mdc`))).toBe(true);
-      expect(fs.pathExistsSync(path.join(templateDir, 'agents-md', `${archetype}.md`))).toBe(true);
+      expect(fs.pathExistsSync(path.join(templateDir, 'project-context', `${archetype}.md`))).toBe(true);
     }
   });
 });
