@@ -160,4 +160,4 @@ Create a spec at `.cursor/specs/fix-<slug>/spec.md` (its own directory, matching
 
 If a unit-of-work story was claimed in Step 5, mark it `done` and append the outcome bolt-log row.
 
-Report: the root cause (one sentence), who introduced it and why, the fix, and the test that proves it. Finish by suggesting `/ko-pr-desc` to write up the change.
+Report: the root cause (one sentence), who introduced it and why, the fix, and the test that proves it. Finish by suggesting `/ko-pr-desc` to write up the change — only if it is installed (`.cursor/commands/ko-pr-desc.md` exists); it is a manual-tier command, otherwise offer `ko-dev-kit install command ko-pr-desc`.
