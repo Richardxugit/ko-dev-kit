@@ -2,7 +2,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { parseFrontmatter } from './frontmatter.js';
-import { otherKitsClaim, readManifest, writeManifest } from './manifest.js';
+import { hashFile, otherKitsClaim, readManifest, writeManifest } from './manifest.js';
 
 // Kit-managed resource directories. Copied into .cursor/<dir>/ and overwritten
 // by default (the kit owns them). Archetype filtering applies via ARCHETYPE_RESOURCES.
@@ -30,12 +30,13 @@ const SKIP_PATTERNS = [
 ];
 
 export async function scaffoldProject(projectDir, archetype, templateDir, resourceMap, options = {}) {
-  const { overwrite = true } = options;
+  const { overwrite = true, manifest = null } = options;
   const created = [];
   const updated = [];
   const skipped = [];
+  const mergeNeeded = [];
   const owned = [];
-  const targets = archetype ? [archetype] : [];
+  const targets = archetype == null ? [] : [archetype].flat();
 
   for (const entry of getCommandEntries(templateDir)) {
     if (SKIP_PATTERNS.some(p => `${entry.name}.md`.includes(p))) continue;
@@ -65,7 +66,10 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
       const dest = path.join(projectDir, '.cursor', dir, rel);
       const relPath = path.join('.cursor', dir, rel);
       owned.push(relPath);
-      if (overwrite) {
+      if (dir === 'rules' && overwrite) {
+        // Rules are user-editable: never clobber local edits — see copyRuleProtected.
+        await copyRuleProtected(file, dest, relPath, manifest, created, updated, mergeNeeded);
+      } else if (overwrite) {
         await copyOverwrite(file, dest, relPath, created, updated);
       } else {
         await copyIfNotExists(file, dest, relPath, created, skipped);
@@ -96,9 +100,9 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
     created, skipped
   );
 
-  if (archetype) {
+  if (targets.length > 0) {
     await copyIfNotExists(
-      path.join(templateDir, 'project-context', `${archetype}.md`),
+      path.join(templateDir, 'project-context', `${targets[0]}.md`),
       path.join(projectDir, 'AGENTS.md'),
       'AGENTS.md',
       created, skipped
@@ -106,7 +110,7 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
   }
 
   await copyIfNotExists(
-    await resolveMcpTemplate(templateDir, archetype),
+    await resolveMcpTemplate(templateDir, targets),
     path.join(projectDir, '.cursor', 'mcp.json'),
     '.cursor/mcp.json',
     created, skipped
@@ -118,11 +122,11 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
     created, skipped
   );
 
-  return { created, updated, skipped, owned };
+  return { created, updated, skipped, mergeNeeded, owned };
 }
 
-async function resolveMcpTemplate(templateDir, archetype) {
-  if (archetype) {
+async function resolveMcpTemplate(templateDir, archetypes) {
+  for (const archetype of [archetypes].flat().filter(Boolean)) {
     const variant = path.join(templateDir, 'settings', `mcp.${archetype}.json`);
     if (await fs.pathExists(variant)) return variant;
   }
@@ -130,7 +134,7 @@ async function resolveMcpTemplate(templateDir, archetype) {
 }
 
 export async function pruneProject(projectDir, archetype, templateDir, resourceMap) {
-  const targets = [archetype];
+  const targets = [archetype].flat();
   const removed = [];
 
   for (const dir of KIT_MANAGED_DIRS) {
@@ -329,6 +333,31 @@ export async function installResource(projectDir, type, name, templateDir, optio
   return { created, updated, skipped };
 }
 
+/**
+ * Rules (and only rules) are user-editable kit files. Overwrite is allowed
+ * only when the on-disk file still matches the hash the kit recorded in the
+ * manifest (i.e. the user never touched it). Otherwise the kit version is
+ * written to <file>.kit-update and the user merges manually — their edits win.
+ */
+async function copyRuleProtected(src, dest, relPath, manifest, created, updated, mergeNeeded) {
+  if (!await fs.pathExists(src)) return;
+  if (!await fs.pathExists(dest)) {
+    await fs.ensureDir(path.dirname(dest));
+    await fs.copy(src, dest);
+    created.push(relPath);
+    return;
+  }
+  const entry = manifest?.files?.find(f => f.path === relPath);
+  const diskHash = await hashFile(dest);
+  if (entry && entry.sha256 === diskHash) {
+    await fs.copy(src, dest, { overwrite: true });
+    updated.push(relPath);
+    return;
+  }
+  await fs.writeFile(`${dest}.kit-update`, await fs.readFile(src));
+  mergeNeeded.push(relPath);
+}
+
 async function copyOverwrite(src, dest, relPath, created, updated) {
   if (!await fs.pathExists(src)) return;
   const existed = await fs.pathExists(dest);
@@ -418,7 +447,7 @@ export async function uninstallResource(projectDir, type, name, templateDir, sel
       .filter(p => p !== relPath);
     await writeManifest(projectDir, selfManifestRelPath, {
       kitVersion: oldManifest.kitVersion,
-      archetype: oldManifest.archetype,
+      archetypes: oldManifest.archetypes ?? (oldManifest.archetype ? [oldManifest.archetype] : []),
       files: remainingFiles,
     });
   }

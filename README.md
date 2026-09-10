@@ -16,10 +16,13 @@ Built for Kmart/Target AU monorepos but generic enough for any TypeScript projec
 | Archetype | Stack | Detected by |
 |---|---|---|
 | `fe-nx` | TypeScript + pnpm + **Nx** + Next.js 15 + styled-components + Apollo Client | `nx.json`, or an `@nx/*` / `@nrwl/*` dependency |
-| `nestjs-graphql` | **NestJS** CLI monorepo + Apollo Federation + Lambda workers | `@nestjs/core` dependency |
-| `design-system` | **Storybook 10 + MUI v6** multi-brand component library | `@mui/material` + an `@storybook/*` dependency |
+| `nestjs-graphql` | **NestJS** CLI monorepo + Apollo Federation + Lambda workers | `@nestjs/core` **plus** `nest-cli.json` or `@nestjs/graphql` |
+| `design-system` | **Storybook 10 + MUI v6** multi-brand component library | `@mui/material` + a `@storybook/*` dependency **plus** a `.storybook/` dir |
 
-Detection priority: `nestjs-graphql` → `design-system` → `fe-nx`.
+A repo can match **multiple archetypes** (e.g. an FE+BE monorepo with both `nx.json` and
+`nest-cli.json`) — `init` then installs the union of their resources. Detection order
+(`nestjs-graphql` → `design-system` → `fe-nx`) only decides which archetype's `AGENTS.md`
+and `mcp.json` variant win when several match. Every detection prints its evidence.
 
 ## Install
 
@@ -37,6 +40,7 @@ Run inside a repo:
 ```bash
 ko-dev-kit init                              # detect archetype, scaffold .cursor/ + AGENTS.md, prune mismatches
 ko-dev-kit init --archetype nestjs-graphql    # non-interactive (CI/scripts)
+ko-dev-kit init --archetype nestjs-graphql,fe-nx # multi-archetype monorepo
 ko-dev-kit prune                              # remove resources that don't match the archetype
 ko-dev-kit install <type> <name> [-g]         # install one resource (skill|agent|command|rule|hook)
 ko-dev-kit uninstall <type> <name> [-g]       # remove one installed resource (kept if another kit still needs it)
@@ -126,7 +130,7 @@ Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo an
 | Slash commands | `.cursor/commands/*.md` (`/ko-*`) | kit-managed (overwritten on `init`) |
 | Skills | `.cursor/skills/<name>/SKILL.md` (+ `references/`) | kit-managed |
 | Subagents | `.cursor/agents/*.md` | kit-managed |
-| Rules | `.cursor/rules/*.mdc` | user-protected (never overwritten) |
+| Rules | `.cursor/rules/*.mdc` | merge-protected (see below) |
 | Project context | root `AGENTS.md` | user-protected |
 | Privacy hook | `.cursor/hooks/privacy-block.cjs` + `.cursor/hooks.json` | script kit-managed; `hooks.json` user-protected |
 | MCP servers | `.cursor/mcp.json` | user-protected |
@@ -134,6 +138,11 @@ Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo an
 
 "User-protected" files are created once and never overwritten — edit them freely. Re-running
 `init` refreshes the kit-managed commands/skills/agents.
+
+Rules are **merge-protected**: `init` overwrites a rule only when its on-disk content still
+matches the hash recorded in the manifest (i.e. you never edited it). If you did edit it, your
+version stays and the kit's new version is written to `<rule>.mdc.kit-update` next to it —
+merge manually, then delete the `.kit-update` file.
 
 ## Resource matrix
 
