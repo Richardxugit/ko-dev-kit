@@ -7,9 +7,11 @@ description: Explore this repo and fill in AGENTS.md with repo-specific details
 
 You are onboarding this repository for Cursor. Your job is to explore the project, understand its structure, and rewrite `AGENTS.md` with accurate, repo-specific details, replacing the kit's placeholders.
 
-## Step 1: Read the current AGENTS.md
+## Step 1: Read the current AGENTS.md and detect the stacks
 
-Read it now — you need to know the baseline template before dispatching exploration. Placeholders come in two spellings; treat both as yours to fill: any comment matching `<!-- run /ko-onboard ... -->` **or** `<!-- /ko-onboard: ... -->` (other kit commands plant the second form inline where they need a repo-specific value).
+Read AGENTS.md now — you need to know the baseline before dispatching exploration. Placeholders come in two spellings; treat both as yours to fill: any comment matching `<!-- run /ko-onboard ... -->` **or** `<!-- /ko-onboard: ... -->`.
+
+Then list `.cursor/rules/*.mdc` — the archetype rules present tell you which stacks this repo contains. **If more than one archetype rule exists (e.g. `nestjs-graphql.mdc` + `react-app.mdc`), this is a multi-stack repo: AGENTS.md may be only a skeleton, and your final rewrite must cover EVERY stack — structure, commands, and conventions for the backend AND the frontend, not just the first archetype.** Explore `apps/`, `packages/`, and root-level frontend dirs for each side.
 
 ## Step 2: Dispatch Explore agent
 
@@ -72,6 +74,7 @@ Anything left unanswered is written into `AGENTS.md` as `UNKNOWN — fill me` �
 
 Using the Explore agent's report and the user's answers, rewrite `AGENTS.md` with actual repo-specific details:
 - Replace every placeholder matching either dialect (`<!-- run /ko-onboard ... -->` / `<!-- /ko-onboard: ... -->`) with real values from the report or the user's answers — or `UNKNOWN — fill me`
+- Multi-stack repos: the skeleton has no per-stack sections — create them from the Explore report (one Repo structure / Commands block per stack, a shared Conventions section)
 - Remove sections that don't apply to this repo
 - Add sections for patterns the template didn't cover
 - Keep it concise — `AGENTS.md` is orientation; `.cursor/rules/` holds the enforceable rules

@@ -25,7 +25,9 @@ A repo can match **multiple archetypes** — an FE+BE monorepo with both `nx.jso
 `nest-cli.json` gets `fe-nx` + `nestjs-graphql`; a React + Nest full-stack repo gets
 `react-app` + `nestjs-graphql`. `init` installs the union of their resources. Detection order
 (`nestjs-graphql` → `design-system` → `fe-nx` → `nextjs-app` → `react-app`) only decides
-which archetype's `AGENTS.md` and `mcp.json` variant win when several match. `nextjs-app` and
+which archetype's `mcp.json` variant wins when several match. For multi-archetype repos,
+`AGENTS.md` is written as a minimal skeleton (no single archetype template can describe the
+repo) — `/ko-onboard` explores the real repo and generates the actual content for every stack. `nextjs-app` and
 `react-app` never fire inside an Nx workspace (that is `fe-nx`'s job). Every detection prints
 its evidence.
 

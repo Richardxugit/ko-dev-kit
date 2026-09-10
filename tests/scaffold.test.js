@@ -69,6 +69,30 @@ describe('scaffoldProject', () => {
     expect(await fs.pathExists(path.join(tmpDir, '.cursor/rules/coding-standards.mdc'))).toBe(true);
   });
 
+  it('multi-archetype repos get a minimal AGENTS.md skeleton, not an archetype template', async () => {
+    await scaffoldProject(tmpDir, ['nestjs-graphql', 'react-app'], templateDir);
+    const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf-8');
+    expect(agents).toContain('multi-archetype repo');
+    expect(agents).toContain('nestjs-graphql + react-app');
+    expect(agents).toContain('.cursor/rules/react-app.mdc');
+    expect(agents).toContain('/ko-onboard');
+    // must NOT contain archetype-template content
+    expect(agents).not.toContain('Project Type: NestJS');
+  });
+
+  it('single-archetype repos still get the archetype AGENTS.md template', async () => {
+    await scaffoldProject(tmpDir, ['react-app'], templateDir);
+    const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf-8');
+    expect(agents).toContain('Project Type: Standalone React App');
+  });
+
+  it('never overwrites an existing AGENTS.md', async () => {
+    await fs.writeFile(path.join(tmpDir, 'AGENTS.md'), 'hand-written\n');
+    const result = await scaffoldProject(tmpDir, ['nestjs-graphql', 'react-app'], templateDir);
+    expect(await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf-8')).toBe('hand-written\n');
+    expect(result.skipped).toContain('AGENTS.md');
+  });
+
   it('does not auto-install manual-tier commands, but they install on demand', async () => {
     const { installResource, MANUAL_INSTALL_COMMANDS } = await import('../src/scaffold.js');
     const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
