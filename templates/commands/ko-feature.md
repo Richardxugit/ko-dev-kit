@@ -8,7 +8,7 @@ skills-optional: [unit-of-work]
 
 ## Prerequisites
 
-This command works best with the **superpowers** skills for brainstorming, planning, and implementation. If the `superpowers:brainstorming` skill is not available, install it via the superpowers repo. The command still works standalone — the inline fallbacks at each step replace the skills.
+This command requires the **superpowers** skills for the methodology phases (brainstorming, planning, implementation). If `superpowers:brainstorming` is not available, install it via the [superpowers repo](https://github.com/obra/superpowers) first — the inline steps below are orchestration only (archetype context, unit-of-work, specs/) and degrade to a summary without the methodology skills.
 
 ## Profiles
 

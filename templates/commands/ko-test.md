@@ -9,7 +9,7 @@ skills-optional: [ts-react-patterns, nestjs-patterns]
 
 Generate tests for the specified file or component, using the appropriate framework based on context.
 
-Invoke **`superpowers:test-driven-development`** when available — it enforces red-green-refactor: write a failing test first, implement just enough to pass, then refactor. The command also works standalone via the steps below.
+Invoke **`superpowers:test-driven-development`** — it enforces red-green-refactor: write a failing test first, implement just enough to pass, then refactor. If it is not installed, install superpowers first; the steps below are orchestration only (stack detection, reuse-first planning) without the TDD discipline.
 
 ## Step 0: Detect the stack and REUSE existing test infrastructure
 

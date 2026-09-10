@@ -9,7 +9,7 @@ skills-optional: [unit-of-work]
 
 ## Prerequisites
 
-This command works best with the **superpowers** skills for systematic debugging. If the `superpowers:systematic-debugging` skill is not available, the command still works standalone using the inline steps below.
+This command requires the **superpowers** skills for the debugging methodology. If `superpowers:systematic-debugging` is not available, install it via the [superpowers repo](https://github.com/obra/superpowers) first — the inline steps below are orchestration only (git archaeology, archetype context, regression-test handoff) and degrade to a summary without the methodology skills. Per the Bug fixes rules: no fix without a stated root cause.
 
 You are fixing a bug in this project. Follow these steps:
 

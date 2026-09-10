@@ -8,7 +8,7 @@ skills-optional: [wcag-2.2-aa, unit-of-work]
 
 Run after completing a feature implementation (or a significant chunk of one) to verify quality gates and generate a QA handoff report. This is the final step before the work is ready for code review.
 
-Invoke **`superpowers:verification-before-completion`** when available — it requires running the commands and confirming output before any success claim. The command also works standalone.
+Invoke **`superpowers:verification-before-completion`** — it requires running the commands and confirming output before any success claim. If it is not installed, install superpowers first; the gates below still run, but treat every result as unverified until the skill is back.
 
 Continue through all steps even if earlier steps find issues — the goal is to gather all findings into a single report, not to fail fast.
 
