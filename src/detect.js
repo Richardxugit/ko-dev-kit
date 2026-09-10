@@ -4,11 +4,11 @@ import path from 'path';
 
 // Priority order — also the order rules/AGENTS.md/mcp variants resolve in when
 // a repo matches multiple archetypes (e.g. an FE+BE monorepo).
-export const ARCHETYPES = ['nestjs-graphql', 'design-system', 'fe-nx'];
+export const ARCHETYPES = ['nestjs-graphql', 'design-system', 'fe-nx', 'nextjs-app', 'react-app'];
 
 /**
  * Detect ALL archetypes a repo matches, with the evidence for each.
- * A monorepo can legitimately be several at once (NestJS API + Nx frontend).
+ * A monorepo can legitimately be several at once (NestJS API + React frontend).
  *
  * @returns {Promise<{ archetype: string, reasons: string[] }[]>}
  */
@@ -22,6 +22,18 @@ export async function detectArchetypes(projectDir) {
   if (ds) found.push({ archetype: 'design-system', reasons: ds });
   const fe = await feNxReasons(projectDir, deps);
   if (fe) found.push({ archetype: 'fe-nx', reasons: fe });
+
+  // Standalone frontend apps: only when the repo is NOT an Nx workspace
+  // (an Nx monorepo with a Next.js app inside is fe-nx's business).
+  if (!fe) {
+    const next = await nextjsAppReasons(projectDir, deps);
+    if (next) {
+      found.push({ archetype: 'nextjs-app', reasons: next });
+    } else if (!ds) {
+      const react = reactAppReasons(deps);
+      if (react) found.push({ archetype: 'react-app', reasons: react });
+    }
+  }
   return found;
 }
 
@@ -55,6 +67,20 @@ async function feNxReasons(dir, deps) {
   if (await fs.pathExists(path.join(dir, 'nx.json'))) return ['nx.json'];
   const nxDep = Object.keys(deps).find(d => d.startsWith('@nx/') || d.startsWith('@nrwl/'));
   return nxDep ? [`${nxDep} dependency`] : null;
+}
+
+async function nextjsAppReasons(dir, deps) {
+  const reasons = [];
+  if ('next' in deps) reasons.push('next dependency');
+  const config = ['next.config.js', 'next.config.mjs', 'next.config.ts', 'next.config.cjs']
+    .find(f => fs.existsSync(path.join(dir, f)));
+  if (config) reasons.push(config);
+  return reasons.length > 0 ? reasons : null;
+}
+
+function reactAppReasons(deps) {
+  if (!('react' in deps)) return null;
+  return ['react dependency'];
 }
 
 async function readPackageJson(dir) {

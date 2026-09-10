@@ -1,0 +1,31 @@
+---
+description: Standalone React app conventions (Vite/CRA/SPA — no Nx, no Next.js)
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# React App Rules
+
+## Project layout
+- `src/` holds everything: `components/` (reusable), `pages/` or `routes/` (screens), `hooks/`, `lib/` or `utils/`, `api/` (data access).
+- Keep components small and single-purpose; extract shared logic into hooks, not utility components.
+- Co-locate tests, styles, and stories next to the component they cover.
+
+## React conventions
+- Function components only; hooks for all state and side effects.
+- Props are typed with an exported `interface`/`type` — no inline `any`, no `React.FC`.
+- State: prefer the simplest tool that fits — local `useState` first, context only for genuinely cross-tree state, a store library only when context actually hurts.
+- Effects: every `useEffect` needs a justification in its dependency array; no effect for derived values (compute during render) or event responses (use handlers).
+- Lists always get stable `key`s from data identity, never array index for mutable lists.
+
+## Data fetching
+- Use the repo's existing data layer (fetch wrapper, axios instance, react-query/tanstack, Apollo). Do not introduce a second one.
+- Handle loading, error, and empty states deliberately — but only the states that can actually occur (see coding-standards Simplicity rules).
+
+## Styling
+- Match the repo's existing approach (CSS modules, styled-components, Tailwind, emotion). Do not mix in a second styling system.
+
+## Testing
+- Match the repo's runner (Vitest or Jest) + React Testing Library.
+- Test behavior (what the user sees/does), not implementation (state names, effect counts).
+- Use the repo's custom `render` wrapper when one exists — never raw `render` against missing providers.

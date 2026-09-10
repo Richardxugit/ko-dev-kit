@@ -5,7 +5,7 @@ detects the repo's archetype and installs matching Cursor resources — slash co
 subagents, a rule, an `AGENTS.md`, a privacy hook, and MCP/CLI config — into the project's
 `.cursor/` (plus a root `AGENTS.md`).
 
-Covers three engineering archetypes: `fe-nx`, `nestjs-graphql`, `design-system`. Behavior —
+Covers five engineering archetypes: `fe-nx`, `nestjs-graphql`, `design-system`, `nextjs-app`, `react-app`. Behavior —
 detection, manifest tracking, pruning, exports — is driven by the scaffolding engine at
 `src/scaffold-core/`.
 
@@ -18,11 +18,16 @@ Built for Kmart/Target AU monorepos but generic enough for any TypeScript projec
 | `fe-nx` | TypeScript + pnpm + **Nx** + Next.js 15 + styled-components + Apollo Client | `nx.json`, or an `@nx/*` / `@nrwl/*` dependency |
 | `nestjs-graphql` | **NestJS** CLI monorepo + Apollo Federation + Lambda workers | `@nestjs/core` **plus** `nest-cli.json` or `@nestjs/graphql` |
 | `design-system` | **Storybook 10 + MUI v6** multi-brand component library | `@mui/material` + a `@storybook/*` dependency **plus** a `.storybook/` dir |
+| `nextjs-app` | Standalone **Next.js** app | `next` dependency or `next.config.*` (not an Nx workspace) |
+| `react-app` | Standalone **React** app (Vite/CRA/SPA) | `react` dependency, no `next` / Nx / design-system signals |
 
-A repo can match **multiple archetypes** (e.g. an FE+BE monorepo with both `nx.json` and
-`nest-cli.json`) — `init` then installs the union of their resources. Detection order
-(`nestjs-graphql` → `design-system` → `fe-nx`) only decides which archetype's `AGENTS.md`
-and `mcp.json` variant win when several match. Every detection prints its evidence.
+A repo can match **multiple archetypes** — an FE+BE monorepo with both `nx.json` and
+`nest-cli.json` gets `fe-nx` + `nestjs-graphql`; a React + Nest full-stack repo gets
+`react-app` + `nestjs-graphql`. `init` installs the union of their resources. Detection order
+(`nestjs-graphql` → `design-system` → `fe-nx` → `nextjs-app` → `react-app`) only decides
+which archetype's `AGENTS.md` and `mcp.json` variant win when several match. `nextjs-app` and
+`react-app` never fire inside an Nx workspace (that is `fe-nx`'s job). Every detection prints
+its evidence.
 
 ## Install
 
@@ -159,6 +164,8 @@ merge manually, then delete the `.kit-update` file.
 | `fe-nx` | `fe-nx.mdc` | `nx-monorepo`, `ts-react-patterns`, `nextjs-app-router`, `nextjs-pages-router`, `pact-contract-testing`, `wcag-2.2-aa` | `ko-lib-package` | `frontend-developer` |
 | `nestjs-graphql` | `nestjs-graphql.mdc` | `nestjs-patterns`, `graphql-apollo`, `apollo-federation`, `serverless-nestjs`, `pact-contract-testing` | `ko-svc-lambda`, `ko-svc-nest-app`, `ko-svc-lib` | `backend-developer` |
 | `design-system` | `design-system.mdc` | `storybook`, `mui-theming`, `component-api-design`, `multi-brand-theming`, `wcag-2.2-aa` | `ko-ds-component` | `design-system-engineer` |
+| `nextjs-app` | `nextjs-app.mdc` | `ts-react-patterns`, `nextjs-app-router`, `nextjs-pages-router`, `wcag-2.2-aa` | — | `frontend-developer` |
+| `react-app` | `react-app.mdc` | `ts-react-patterns`, `wcag-2.2-aa` | — | `frontend-developer` |
 
 ## Commands reference
 
