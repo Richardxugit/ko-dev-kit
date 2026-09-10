@@ -100,6 +100,20 @@ describe('command frontmatter', () => {
   });
 });
 
+describe('anti-overengineering rules', () => {
+  it('coding-standards.mdc carries the Simplicity and Bug fixes sections', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'rules', 'coding-standards.mdc'), 'utf-8');
+    for (const section of ['## Simplicity (hard rules)', '## Bug fixes (hard rules)']) {
+      expect(content.includes(section), `coding-standards.mdc lost section "${section}"`).toBe(true);
+    }
+  });
+
+  it('review-specialist has a simplicity playbook', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
+    expect(content).toContain('### `simplicity`');
+  });
+});
+
 describe('kit-wide staleness lint (dev-kit slice)', () => {
   const BANNED = [
     { name: 'ko-inception (removed command)', re: /ko-inception/ },
@@ -126,7 +140,9 @@ describe('kit-wide staleness lint (dev-kit slice)', () => {
     { file: 'agents/code-reviewer.md', token: 'diff hunk' },
     { file: 'agents/review-specialist.md', token: 'diff hunk' },
     { file: 'agents/review-specialist.md', token: 'do not rewrite' },
-    { file: 'commands/ko-review-team.md', token: 'regression' },
+    { file: 'commands/ko-review.md', token: 'regression' },
+    { file: 'commands/ko-review.md', token: 'simplicity' },
+    { file: 'commands/ko-review.md', token: '--team' },
   ];
 
   it.each(REQUIRED)('$file carries its pattern token "$token"', ({ file, token }) => {
