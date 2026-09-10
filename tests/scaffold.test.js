@@ -69,6 +69,25 @@ describe('scaffoldProject', () => {
     expect(await fs.pathExists(path.join(tmpDir, '.cursor/rules/coding-standards.mdc'))).toBe(true);
   });
 
+  it('multi-archetype repos get the UNION of recommended mcp servers', async () => {
+    await scaffoldProject(tmpDir, ['nestjs-graphql', 'react-app'], templateDir);
+    const mcp = await fs.readJson(path.join(tmpDir, '.cursor', 'mcp.json'));
+    // react-app contributes figma, nestjs-graphql contributes atlassian
+    expect(Object.keys(mcp.mcpServers).sort()).toEqual(['atlassian', 'figma']);
+  });
+
+  it('mcp.json is user-protected (never overwritten)', async () => {
+    await scaffoldProject(tmpDir, ['nestjs-graphql'], templateDir);
+    const first = await fs.readJson(path.join(tmpDir, '.cursor', 'mcp.json'));
+    expect(Object.keys(first.mcpServers)).toEqual(['atlassian']);
+    first.mcpServers['my-own'] = { url: 'http://localhost:1234' };
+    await fs.writeJson(path.join(tmpDir, '.cursor', 'mcp.json'), first);
+    const result = await scaffoldProject(tmpDir, ['react-app'], templateDir);
+    const after = await fs.readJson(path.join(tmpDir, '.cursor', 'mcp.json'));
+    expect(after.mcpServers['my-own']).toBeDefined();
+    expect(result.skipped).toContain('.cursor/mcp.json');
+  });
+
   it('multi-archetype repos get a minimal AGENTS.md skeleton, not an archetype template', async () => {
     await scaffoldProject(tmpDir, ['nestjs-graphql', 'react-app'], templateDir);
     const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf-8');

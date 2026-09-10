@@ -120,12 +120,16 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
     }
   }
 
-  await copyIfNotExists(
-    await resolveMcpTemplate(templateDir, targets),
-    path.join(projectDir, '.cursor', 'mcp.json'),
-    '.cursor/mcp.json',
-    created, skipped
-  );
+  {
+    const dest = path.join(projectDir, '.cursor', 'mcp.json');
+    if (!await fs.pathExists(dest)) {
+      await fs.ensureDir(path.dirname(dest));
+      await fs.writeJson(dest, buildMcpConfig(targets), { spaces: 2 });
+      created.push('.cursor/mcp.json');
+    } else {
+      skipped.push('.cursor/mcp.json');
+    }
+  }
   await copyIfNotExists(
     path.join(templateDir, 'settings', 'cli.json'),
     path.join(projectDir, '.cursor', 'cli.json'),
@@ -134,14 +138,6 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
   );
 
   return { created, updated, skipped, mergeNeeded, owned };
-}
-
-async function resolveMcpTemplate(templateDir, archetypes) {
-  for (const archetype of [archetypes].flat().filter(Boolean)) {
-    const variant = path.join(templateDir, 'settings', `mcp.${archetype}.json`);
-    if (await fs.pathExists(variant)) return variant;
-  }
-  return path.join(templateDir, 'settings', 'mcp.json');
 }
 
 export async function pruneProject(projectDir, archetype, templateDir, resourceMap) {
@@ -234,11 +230,9 @@ export function listAvailableResources(templateDir) {
  *
  * @returns {{ name: string, config: object }[]}
  */
-export async function getMcpSuggestions(projectDir, archetype, templateDir) {
-  const templatePath = await resolveMcpTemplate(templateDir, archetype);
-  if (!await fs.pathExists(templatePath)) return [];
-  const template = await fs.readJson(templatePath).catch(() => null);
-  const templateServers = template?.mcpServers ?? {};
+export async function getMcpSuggestions(projectDir, archetypes, templateDir) {
+  const templateServers = buildMcpConfig([archetypes].flat().filter(Boolean)).mcpServers;
+  if (Object.keys(templateServers).length === 0) return [];
 
   const projectPath = path.join(projectDir, '.cursor', 'mcp.json');
   if (!await fs.pathExists(projectPath)) return [];
@@ -350,6 +344,30 @@ export async function installResource(projectDir, type, name, templateDir, optio
  * manifest (i.e. the user never touched it). Otherwise the kit version is
  * written to <file>.kit-update and the user merges manually — their edits win.
  */
+// Recommended MCP servers per archetype. For multi-archetype repos the
+// recommendation is the UNION — a React+Nest repo needs Figma for the
+// frontend side AND Atlassian for the backend workflow.
+const ARCHETYPE_MCP_SERVERS = {
+  'fe-nx': ['atlassian', 'figma'],
+  'design-system': ['atlassian', 'figma'],
+  'nextjs-app': ['atlassian', 'figma'],
+  'react-app': ['atlassian', 'figma'],
+  'nestjs-graphql': ['atlassian'],
+};
+
+const MCP_SERVER_DEFS = {
+  atlassian: { url: 'https://mcp.atlassian.com/v1/sse' },
+  figma: { url: 'http://127.0.0.1:3845/mcp' },
+};
+
+// Build the mcp.json content for a set of archetypes (union of servers).
+function buildMcpConfig(targets) {
+  const names = [...new Set(targets.flatMap(a => ARCHETYPE_MCP_SERVERS[a] ?? []))];
+  const mcpServers = {};
+  for (const name of names) mcpServers[name] = MCP_SERVER_DEFS[name];
+  return { mcpServers };
+}
+
 function multiArchetypeContext(targets) {
   const ruleRefs = targets.map(a => `- \`.cursor/rules/${a}.mdc\``).join('\n');
   return `<!-- ko-dev-kit-template -->
