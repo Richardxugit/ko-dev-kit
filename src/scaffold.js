@@ -25,8 +25,8 @@ export const ARCHETYPE_RESOURCES = {
     'ko-svc-lib': ['nestjs-graphql'],
     // Excluded from design-system too (overkill for component-focused workflow):
     'ko-feature': ['fe-nx', 'nestjs-graphql'],
+    'ko-spike': ['fe-nx', 'nestjs-graphql'],
     'ko-implement': ['fe-nx', 'nestjs-graphql'],
-    'ko-knowledge-gen': ['fe-nx', 'nestjs-graphql'],
   },
   skills: {
     'nx-monorepo': ['fe-nx'],
@@ -49,10 +49,14 @@ export const ARCHETYPE_RESOURCES = {
 
 export const MANIFEST_REL_PATH = path.join('.cursor', '.ko-dev-kit-manifest.json');
 
+// SDLC periphery — never auto-installed by init; `ko-dev-kit install command <name>`
+// adds them on demand. Keep the core loop lean.
+export const MANUAL_INSTALL_COMMANDS = ['ko-new-command', 'ko-knowledge-gen', 'ko-pr-desc', 'ko-release-verify'];
+
 export const getCommandEntries = (templateDir) => engine.getCommandEntries(templateDir);
 
 export const scaffoldProject = (projectDir, archetype, templateDir, options) =>
-  engine.scaffoldProject(projectDir, archetype, templateDir, ARCHETYPE_RESOURCES, options);
+  engine.scaffoldProject(projectDir, archetype, templateDir, ARCHETYPE_RESOURCES, { ...options, manualInstall: MANUAL_INSTALL_COMMANDS });
 
 export const pruneProject = (projectDir, archetype, templateDir) =>
   engine.pruneProject(projectDir, archetype, templateDir, ARCHETYPE_RESOURCES);

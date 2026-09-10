@@ -100,6 +100,32 @@ yarn graphql:publish          # rover schema publish
 - **Commits:** `type(scope): KOSM-XXXX: description` (e.g. `feat(orders): KOSM-1234: add loyalty endpoint`). Enforced by Husky + commitlint.
 - **Secrets:** Never commit decrypted `.env.secret`. SSM Parameter Store in production.
 
+## Kit commands (/ko-*)
+
+Installed by ko-dev-kit. Core loop:
+
+| Command | Purpose |
+|---------|---------|
+| `/ko-feature <name>` | New feature → brainstorm → spec → plan → implement → verify |
+| `/ko-spike <question>` | Timeboxed throwaway experiment → findings + go/no-go (never merges) |
+| `/ko-implement [plan]` | Resume/execute a plan from `.cursor/specs/` |
+| `/ko-bugfix <desc>` | Systematic debugging → root-cause fix → regression test → verify |
+| `/ko-test <target>` | Generate tests appropriate to the file/stack |
+| `/ko-review [--team]` | Review the diff; `--team` = multi-specialist pass with verdict |
+| `/ko-verify` | Build/lint/type/tests + QA report |
+| `/ko-onboard` | Fill in AGENTS.md with real repo values |
+
+On-demand (install when needed: `ko-dev-kit install command <name>`):
+`ko-pr-desc`, `ko-release-verify`, `ko-knowledge-gen`, `ko-new-command`.
+
+Archetype-specific:
+
+| Command | Purpose |
+|---------|---------|
+| `/ko-svc-lambda <name>` | Scaffold a Lambda worker (`wrapLambda()`) |
+| `/ko-svc-nest-app <name>` | Scaffold a NestJS app (Apollo subgraph) |
+| `/ko-svc-lib <name>` | Scaffold a shared library in `libs/` |
+
 ## Delivery
 
 - **Product family repos & local paths:** <!-- run /ko-onboard: sibling repos + checkout paths -->

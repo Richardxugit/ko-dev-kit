@@ -68,4 +68,15 @@ describe('scaffoldProject', () => {
     expect(result.removed).toContain('.cursor/rules/design-system.mdc');
     expect(await fs.pathExists(path.join(tmpDir, '.cursor/rules/coding-standards.mdc'))).toBe(true);
   });
+
+  it('does not auto-install manual-tier commands, but they install on demand', async () => {
+    const { installResource, MANUAL_INSTALL_COMMANDS } = await import('../src/scaffold.js');
+    const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    for (const cmd of MANUAL_INSTALL_COMMANDS) {
+      expect(await fs.pathExists(path.join(tmpDir, '.cursor/commands', `${cmd}.md`)), `${cmd} should not auto-install`).toBe(false);
+      expect(result.owned.some(f => f.includes(cmd)), `${cmd} should not be owned by the manifest`).toBe(false);
+    }
+    const install = await installResource(tmpDir, 'command', 'ko-release-verify', templateDir);
+    expect(install.created).toContain('.cursor/commands/ko-release-verify.md');
+  });
 });

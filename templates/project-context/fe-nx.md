@@ -87,6 +87,30 @@ pnpm nx graph
 - **Commits:** `type [KO-XXXX]: short description` (e.g. `feat [KO-1234]: add wishlist page`, header ≤ 72 chars; ticket is a commitlint warning, not an error). Enforced by Husky + commitlint. `npx cz` for interactive commits.
 - **Secrets:** Never commit decrypted `.env.secret`. Use `scripts/crypt.js` for local env management.
 
+## Kit commands (/ko-*)
+
+Installed by ko-dev-kit. Core loop:
+
+| Command | Purpose |
+|---------|---------|
+| `/ko-feature <name>` | New feature → brainstorm → spec → plan → implement → verify |
+| `/ko-spike <question>` | Timeboxed throwaway experiment → findings + go/no-go (never merges) |
+| `/ko-implement [plan]` | Resume/execute a plan from `.cursor/specs/` |
+| `/ko-bugfix <desc>` | Systematic debugging → root-cause fix → regression test → verify |
+| `/ko-test <target>` | Generate tests appropriate to the file/stack |
+| `/ko-review [--team]` | Review the diff; `--team` = multi-specialist pass with verdict |
+| `/ko-verify` | Build/lint/type/tests + QA report |
+| `/ko-onboard` | Fill in AGENTS.md with real repo values |
+
+On-demand (install when needed: `ko-dev-kit install command <name>`):
+`ko-pr-desc`, `ko-release-verify`, `ko-knowledge-gen`, `ko-new-command`.
+
+Archetype-specific:
+
+| Command | Purpose |
+|---------|---------|
+| `/ko-lib-package <Name>` | Scaffold a shared package in `packages/` |
+
 ## Before editing
 
 - Read `.cursor/rules/fe-nx.mdc` for the binding conventions.

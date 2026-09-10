@@ -95,6 +95,27 @@ pnpm plop                   # generates 6-file structure
 - Skills: `mui-theming`, `multi-brand-theming`, `component-api-design`, `storybook`, `wcag-2.2-aa`
 - Commands: `/ko-ds-component`
 
+## Kit commands (/ko-*)
+
+Installed by ko-dev-kit. Core loop:
+
+| Command | Purpose |
+|---------|---------|
+| `/ko-bugfix <desc>` | Systematic debugging → root-cause fix → regression test → verify |
+| `/ko-test <target>` | Generate tests appropriate to the file/stack |
+| `/ko-review [--team]` | Review the diff; `--team` = multi-specialist pass with verdict |
+| `/ko-verify` | Build/lint/type/tests + QA report |
+| `/ko-onboard` | Fill in AGENTS.md with real repo values |
+
+On-demand (install when needed: `ko-dev-kit install command <name>`):
+`ko-pr-desc`, `ko-release-verify`, `ko-knowledge-gen`, `ko-new-command`.
+
+Archetype-specific:
+
+| Command | Purpose |
+|---------|---------|
+| `/ko-ds-component <Name>` | Scaffold an MUI v6 component (6-file structure) |
+
 ## Delivery
 
 - **Product family repos & local paths:** <!-- run /ko-onboard: sibling repos + checkout paths -->

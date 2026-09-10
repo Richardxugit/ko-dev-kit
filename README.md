@@ -148,8 +148,8 @@ merge manually, then delete the `.kit-update` file.
 
 **Shared (`fe-nx`, `nestjs-graphql`, `design-system` — every archetype in this kit):**
 - rule: `coding-standards.mdc` (always applied)
-- commands: `ko-onboard`, `ko-help`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-review-team`, `ko-verify`, `ko-pr-desc`, `ko-release-verify`
-- commands (all except design-system): `ko-feature`, `ko-implement`, `ko-knowledge-gen`
+- commands: `ko-onboard`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-verify`
+- commands (all except design-system): `ko-feature`, `ko-spike`, `ko-implement`
 - skill (all except design-system): `unit-of-work`
 - agents: `code-reviewer`, `review-specialist`
 - hook: `privacy-block`; settings: `mcp.json`, `cli.json`
@@ -166,25 +166,24 @@ merge manually, then delete the `.kit-update` file.
 | Command | Purpose |
 |---------|---------|
 | `/ko-onboard` | Explore repo, fill AGENTS.md placeholders with real values |
-| `/ko-help` | List available `/ko-*` commands for this archetype |
 | `/ko-bugfix` | Systematic debugging (reproduce → locate → fix → verify) |
 | `/ko-test` | Generate appropriate tests for a target file |
-| `/ko-review` | Review current diff via the code-reviewer agent |
-| `/ko-review-team` | Multi-agent PR review — a team of specialists in one round, consolidated verdict |
+| `/ko-review [--team]` | Review a change set — single pass by default; `--team` dispatches specialist reviewers (compliance, regression, simplicity, frontend, backend, tests) with a consolidated verdict |
 | `/ko-verify` | Run build/lint/tests and confirm they pass |
-| `/ko-pr-desc` | Generate PR title and description from diff + branch name |
-| `/ko-release-verify` | Jira tickets → related PRs → Buildkite deploy state (nonProd/prod) → risk + flags → release runbook (never deploys) |
 
 ### Shared commands (`fe-nx` / `nestjs-graphql` only)
 | Command | Purpose |
 |---------|---------|
 | `/ko-feature` | End-to-end feature workflow (clarify → design → implement → verify); claims a matching unit of work |
+| `/ko-spike` | Timeboxed throwaway experiment → findings doc + go/no-go decision; never merges |
 | `/ko-implement` | Resume/execute a plan from `.cursor/specs/` with checkpoints; picks up in-progress unit stories |
-| `/ko-knowledge-gen` | Generate knowledge base — full repo or focused topic (e.g. `/ko-knowledge-gen flybuys-linking`) |
 
-### Manual-install only
+### Manual-install only (SDLC periphery — install when needed)
 | Command | Purpose | Install |
 |---------|---------|---------|
+| `/ko-pr-desc` | Generate PR title and description from diff + branch name | `ko-dev-kit install command ko-pr-desc` |
+| `/ko-release-verify` | Jira tickets → PRs → Buildkite deploy state → release runbook (never deploys) | `ko-dev-kit install command ko-release-verify` |
+| `/ko-knowledge-gen` | Generate knowledge base — full repo or focused topic | `ko-dev-kit install command ko-knowledge-gen` |
 | `/ko-new-command` | Create a new custom `/ko-*` command from plain-English description | `ko-dev-kit install command ko-new-command` |
 
 ### fe-nx commands
@@ -204,7 +203,7 @@ merge manually, then delete the `.kit-update` file.
 |---------|---------|
 | `/ko-ds-component` | Scaffold MUI v6 component with 6-file structure. Two profiles: standard (design ready) and discovery (brainstorm API first) |
 
-Note: design-system excludes `/ko-feature`, `/ko-implement`, `/ko-knowledge-gen` — component work is self-contained via `/ko-ds-component`.
+Note: design-system excludes `/ko-feature`, `/ko-spike`, `/ko-implement` — component work is self-contained via `/ko-ds-component`.
 
 ## Commit conventions
 

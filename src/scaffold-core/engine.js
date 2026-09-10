@@ -26,11 +26,10 @@ const SKIP_PATTERNS = [
   '__pycache__',   // Python cache
   '.pyc',          // compiled Python
   'specs',         // .cursor/specs/ is user data, never overwrite
-  'ko-new-command', // manual-install only (via `ko-dev-kit install command ko-new-command`)
 ];
 
 export async function scaffoldProject(projectDir, archetype, templateDir, resourceMap, options = {}) {
-  const { overwrite = true, manifest = null } = options;
+  const { overwrite = true, manifest = null, manualInstall = [] } = options;
   const created = [];
   const updated = [];
   const skipped = [];
@@ -40,6 +39,7 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
 
   for (const entry of getCommandEntries(templateDir)) {
     if (SKIP_PATTERNS.some(p => `${entry.name}.md`.includes(p))) continue;
+    if (manualInstall.includes(entry.name)) continue; // SDLC periphery — `install command <name>` on demand
     const restrictions = resourceMap.commands?.[entry.name];
     if (restrictions && !restrictions.some(r => targets.includes(r))) continue;
     const relPath = path.join('.cursor', 'commands', `${entry.name}.md`);
