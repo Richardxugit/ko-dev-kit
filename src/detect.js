@@ -13,8 +13,7 @@ export const ARCHETYPES = ['nestjs-graphql', 'design-system', 'fe-nx', 'nextjs-a
  * @returns {Promise<{ archetype: string, reasons: string[] }[]>}
  */
 export async function detectArchetypes(projectDir) {
-  const pkg = await readPackageJson(projectDir);
-  const deps = pkg ? { ...pkg.dependencies, ...pkg.devDependencies } : {};
+  const deps = await readWorkspaceDeps(projectDir);
   const found = [];
   const nestjs = await nestjsGraphqlReasons(projectDir, deps);
   if (nestjs) found.push({ archetype: 'nestjs-graphql', reasons: nestjs });
@@ -72,8 +71,10 @@ async function feNxReasons(dir, deps) {
 async function nextjsAppReasons(dir, deps) {
   const reasons = [];
   if ('next' in deps) reasons.push('next dependency');
-  const config = ['next.config.js', 'next.config.mjs', 'next.config.ts', 'next.config.cjs']
-    .find(f => fs.existsSync(path.join(dir, f)));
+  const names = ['next.config.js', 'next.config.mjs', 'next.config.ts', 'next.config.cjs'];
+  const config = names.find(f => fs.existsSync(path.join(dir, f)))
+    ?? FRONTEND_HINT_DIRS.map(d => names.find(f => fs.existsSync(path.join(dir, d, f))))
+      .find(Boolean);
   if (config) reasons.push(config);
   return reasons.length > 0 ? reasons : null;
 }
@@ -91,4 +92,36 @@ async function readPackageJson(dir) {
   } catch {
     return null;
   }
+}
+
+// Monorepos keep frontend deps in sub-package package.json files
+// (apps/web, packages/ui, frontend/, ...) — merge deps from the root and
+// one level of common workspace dirs so FE signals are not missed.
+const WORKSPACE_DIRS = ['apps', 'packages', 'libs', 'services'];
+const FRONTEND_HINT_DIRS = ['frontend', 'client', 'web', 'app'];
+
+async function readWorkspaceDeps(rootDir) {
+  const deps = {};
+  const merge = (pkg) => {
+    if (pkg) Object.assign(deps, pkg.dependencies ?? {}, pkg.devDependencies ?? {});
+  };
+  merge(await readPackageJson(rootDir));
+  for (const hint of FRONTEND_HINT_DIRS) {
+    merge(await readPackageJson(path.join(rootDir, hint)));
+  }
+  for (const sub of WORKSPACE_DIRS) {
+    const dir = path.join(rootDir, sub);
+    if (!await fs.pathExists(dir)) continue;
+    let entries = [];
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      merge(await readPackageJson(path.join(dir, entry.name)));
+    }
+  }
+  return deps;
 }

@@ -105,6 +105,19 @@ describe('detectArchetypes (multi-archetype)', () => {
     expect(await detectArchetypes(tmpDir)).toEqual([]);
   });
 
+  it('detects react-app when react only exists in a workspace sub-package', async () => {
+    await fs.outputJson(path.join(tmpDir, 'package.json'), { dependencies: { '@nestjs/core': '^10.0.0' } });
+    await fs.outputJson(path.join(tmpDir, 'nest-cli.json'), {});
+    await fs.outputJson(path.join(tmpDir, 'apps', 'web', 'package.json'), { dependencies: { react: '^19.0.0' } });
+    const found = await detectArchetypes(tmpDir);
+    expect(found.map(f => f.archetype)).toEqual(['nestjs-graphql', 'react-app']);
+  });
+
+  it('detects react-app from a root-level frontend/ package', async () => {
+    await fs.outputJson(path.join(tmpDir, 'frontend', 'package.json'), { dependencies: { react: '^19.0.0' } });
+    expect(await detectArchetype(tmpDir)).toBe('react-app');
+  });
+
   it('detects both sides of a React + Nest full-stack repo', async () => {
     await fs.outputJson(path.join(tmpDir, 'package.json'), {
       dependencies: { '@nestjs/core': '^10.0.0', react: '^19.0.0', 'react-dom': '^19.0.0' },
