@@ -22,6 +22,7 @@ This command **reviews and reports — it never edits code and never posts to th
 One quick probe; this is user-triggered analysis, not a release gate, so a missing tool degrades the scope rather than blocking:
 
 - `gh auth status` — if green, `gh` may be used **read-only**: fetch a PR's diff and metadata, resolve the default branch, note failing CI checks as context. **Never** `gh pr create` / `edit` / `comment` / `review` — this command is output-only.
+- **BugBot evidence** — when reviewing a PR, also pull existing bot reviews: `gh api repos/{owner}/{repo}/pulls/<n>/comments` (inline) and `gh pr view <n> --comments` (summary), filtered to BugBot/Cursor-bot authors. Feed them to reviewers as prior findings. BugBot is good at logic-bug spotting in the diff; it cannot see spec compliance, simplicity, or blast radius — that is our lane. If no BugBot comments exist, mention one line: "BugBot not configured on this repo — worth enabling (Cursor → Automations)" and move on.
 - If `gh` is absent or unauthenticated, or the arg is not a PR: proceed on **local git only**, resolving the base branch by probing `origin/main` then `origin/master`.
 
 Print a one-line `✅/❌ gh` so the user knows which mode they're in.
@@ -94,6 +95,9 @@ Prior evidence: <newest QA report risk areas + spec acceptance criteria, if any>
 Report findings as: `path:line — problem. Suggested fix.`, grouped by
 severity (Blocking / Should-fix / Nit). Every finding must cite an actual
 diff hunk. If your dimension is clean, say so plainly.
+BugBot already flagged: <its comments, or "nothing">. Do not re-report what
+it caught unless you disagree with its assessment — spend your attention on
+what it cannot see.
 ```
 
 - The **frontend** specialist is additionally told: *use the `wcag-2.2-aa` skill if it is installed* for the accessibility portion.
@@ -101,7 +105,7 @@ diff hunk. If your dimension is clean, say so plainly.
 
 ### Step T3: Aggregate
 
-Collect every specialist's findings into one list. When two dimensions flag the **same `path:line`**, merge them into a single entry, keep the **highest** severity, and tag which dimensions raised it. Group the merged list by severity — **Blocking / Should-fix / Nit** — and tag each finding with its dimension(s).
+Collect every specialist's findings into one list. Drop or down-tag anything BugBot already reported (note "also caught by BugBot" instead of duplicating). When two dimensions flag the **same `path:line`**, merge them into a single entry, keep the **highest** severity, and tag which dimensions raised it. Group the merged list by severity — **Blocking / Should-fix / Nit** — and tag each finding with its dimension(s).
 
 ### Step T4: Cross-PR consistency pass (only when reviewing more than one PR)
 

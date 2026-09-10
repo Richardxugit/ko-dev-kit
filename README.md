@@ -167,6 +167,26 @@ merge manually, then delete the `.kit-update` file.
 | `nextjs-app` | `nextjs-app.mdc` | `ts-react-patterns`, `nextjs-app-router`, `nextjs-pages-router`, `wcag-2.2-aa` | — | `frontend-developer` |
 | `react-app` | `react-app.mdc` | `ts-react-patterns`, `wcag-2.2-aa` | — | `frontend-developer` |
 
+## Lifecycle
+
+Every change flows the same loop — `/ko-feature` or `/ko-bugfix` is the entry, and
+verify + review run on **every** pass, not just big features:
+
+```mermaid
+flowchart LR
+    A["/ko-feature<br/>brainstorm → spec → plan"] --> B["/ko-implement<br/>TDD per task"]
+    C["/ko-bugfix<br/>reproduce → root cause → fix"] --> B
+    S["/ko-spike<br/>timeboxed experiment"] -.->|go| A
+    B --> D["/ko-verify<br/>build/lint/type/test + QA report"]
+    D --> E["/ko-review [--team]<br/>severity-ranked findings"]
+    E -->|Blocking/Should-fix| B
+    E -->|ship| F["PR → BugBot (if enabled)<br/>→ merge"]
+```
+
+`/ko-implement` runs tests per task (TDD); `/ko-verify` is the gate before review;
+`/ko-review` is the gate before PR. On the PR itself, Cursor's BugBot adds an automated
+bug pass on top — `/ko-review` reads its comments and dedupes against them.
+
 ## Commands reference
 
 ### Shared commands (`fe-nx` / `nestjs-graphql` / `design-system`)
@@ -211,6 +231,19 @@ merge manually, then delete the `.kit-update` file.
 | `/ko-ds-component` | Scaffold MUI v6 component with 6-file structure. Two profiles: standard (design ready) and discovery (brainstorm API first) |
 
 Note: design-system excludes `/ko-feature`, `/ko-spike`, `/ko-implement` — component work is self-contained via `/ko-ds-component`.
+
+## Agent models
+
+Every agent in `templates/agents/` declares a `model:` in its frontmatter
+([Cursor subagent docs](https://cursor.com/docs/subagents)):
+
+- `inherit` (default) — uses whatever model the parent chat runs
+- `fast` — Cursor's cheap/fast tier
+- a specific model ID — exactly what the Cursor model picker shows (e.g. `composer-2`)
+
+The kit pins `review-specialist` to `fast` because `/ko-review --team` fans out 4-6
+specialists per run — quality-critical agents (developers, `code-reviewer`) stay on
+`inherit`. To change any agent's cost, edit that agent's `model:` line.
 
 ## Commit conventions
 

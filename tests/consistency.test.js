@@ -108,6 +108,22 @@ describe('anti-overengineering rules', () => {
     }
   });
 
+  it('review-specialist is pinned to the fast model tier', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
+    expect(content).toContain('model: fast');
+  });
+
+  it('coding-standards.mdc carries the spec style section', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'rules', 'coding-standards.mdc'), 'utf-8');
+    expect(content).toContain('## Specs and docs (style)');
+    expect(content).toContain('Mermaid');
+  });
+
+  it('ko-review integrates BugBot evidence', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'commands', 'ko-review.md'), 'utf-8');
+    expect(content).toContain('BugBot');
+  });
+
   it('review-specialist has a simplicity playbook', () => {
     const content = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
     expect(content).toContain('### `simplicity`');
