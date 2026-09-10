@@ -193,7 +193,7 @@ describe('cross-kit reference lint', () => {
       lines.forEach((line, i) => {
         for (const cmd of MANUAL_INSTALL_COMMANDS) {
           if (file.endsWith(`${path.sep}${cmd}.md`)) continue; // a command may reference itself freely
-          if (!new RegExp(`(?<![\\w/@-])/${cmd}([.\\s]|$)`).test(line)) continue;
+          if (!new RegExp(`(?<![\\w/@-])/${cmd}(?![a-z0-9-])`).test(line)) continue;
           const guarded = GUARD.test(line) || GUARD.test(lines.slice(Math.max(0, i - 3), i + 1).join(' '));
           expect(guarded, `${path.relative(templateDir, file)}:${i + 1} references manual-tier "/${cmd}" without an install guard`).toBe(true);
         }
@@ -209,7 +209,7 @@ describe('cross-kit reference lint', () => {
       const lines = content.split('\n');
       lines.forEach((line, i) => {
         for (const ext of [...EXTERNAL_COMMANDS]) {
-          const re = new RegExp(`(?<![\\w/@-])/${ext}([.\\s]|$)`);
+          const re = new RegExp(`(?<![\\w/@-])/${ext}(?![a-z0-9-])`);
           if (!re.test(line)) continue;
           // allow format-spec examples (tables/bolt logs) — the section header carries the guard
           const section = lines.slice(0, i + 1).reverse().find(l => l.startsWith('#')) ?? '';
