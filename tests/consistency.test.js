@@ -119,6 +119,14 @@ describe('anti-overengineering rules', () => {
     expect(content).toContain('Mermaid');
   });
 
+  it('ko-fix-review exists and is referenced as the review follow-up', () => {
+    const cmd = fs.readFileSync(path.join(templateDir, 'commands', 'ko-fix-review.md'), 'utf-8');
+    expect(cmd).toContain('[bugbot]');
+    expect(cmd).toContain('[human]');
+    const review = fs.readFileSync(path.join(templateDir, 'commands', 'ko-review.md'), 'utf-8');
+    expect(review).toContain('/ko-fix-review');
+  });
+
   it('ko-review integrates BugBot evidence', () => {
     const content = fs.readFileSync(path.join(templateDir, 'commands', 'ko-review.md'), 'utf-8');
     expect(content).toContain('BugBot');

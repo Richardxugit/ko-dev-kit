@@ -181,7 +181,8 @@ flowchart LR
     S["/ko-spike<br/>timeboxed experiment"] -.->|go| A
     B --> D["/ko-verify<br/>build/lint/type/test + QA report"]
     D --> E["/ko-review [--team]<br/>severity-ranked findings"]
-    E -->|Blocking/Should-fix| B
+    E -->|findings file| G["/ko-fix-review<br/>(fresh session)"]
+    G --> B
     E -->|ship| F["PR → BugBot (if enabled)<br/>→ merge"]
 ```
 
@@ -198,6 +199,7 @@ bug pass on top — `/ko-review` reads its comments and dedupes against them.
 | `/ko-bugfix` | Systematic debugging (reproduce → locate → fix → verify) |
 | `/ko-test` | Generate appropriate tests for a target file |
 | `/ko-review [--team]` | Review a change set — single pass by default; `--team` dispatches specialist reviewers (compliance, regression, simplicity, frontend, backend, tests) with a consolidated verdict |
+| `/ko-fix-review` | Address review feedback — syncs kit findings + human + BugBot comments into one file, fixes each with regression tests. Run in a fresh session |
 | `/ko-verify` | Run build/lint/tests and confirm they pass |
 
 ### Shared commands (`fe-nx` / `nestjs-graphql` only)
