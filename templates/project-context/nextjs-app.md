@@ -54,6 +54,7 @@ Installed by ko-dev-kit. Core loop:
 | `/ko-bugfix <desc>` | Systematic debugging → root-cause fix → regression test → verify |
 | `/ko-test <target>` | Generate tests appropriate to the file/stack |
 | `/ko-review [--team]` | Review the diff; `--team` = multi-specialist pass with verdict |
+| `/ko-fix-review <PR>` | Fix review findings (kit + human + BugBot comments) in a fresh session |
 | `/ko-verify` | Build/lint/type/tests + QA report |
 | `/ko-onboard` | Fill in AGENTS.md with real repo values |
 

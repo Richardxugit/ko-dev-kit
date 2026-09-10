@@ -129,7 +129,7 @@ Write the consolidated review to `.cursor/specs/mr-reviews/<id>.md` (create the 
 
 ## Boundaries
 
-- **Reports, never rewrites.** The review diagnoses; fixing is a separate step (`/ko-feature`, `/ko-bugfix`, or hand edits), and empirical "won't break" confirmation is `/ko-verify`'s job — this command reasons statically.
+- **Reports, never rewrites.** The review diagnoses; fixing is `/ko-fix-review`'s job (run it in a fresh session against the findings file), and empirical "won't break" confirmation is `/ko-verify`'s job — this command reasons statically.
 - **Findings cite the diff.** No issues invented from memory about code the change set does not touch.
 - **Scope to the change and its immediate blast radius** — not an unrelated-refactor hunt.
 - Read-only to the end: never comment on or modify the PR. If the user wants to post the review, offer a **paste-ready** comment block — they post it themselves.
