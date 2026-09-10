@@ -1,7 +1,7 @@
 ---
 name: review-specialist
 description: One specialist on a review team. Dispatch with a single assigned dimension (compliance, regression, frontend, backend, tests, or simplicity); it reviews a diff for that dimension only and reports findings. Read-only — it never rewrites code.
-model: inherit
+model: fast
 readonly: true
 ---
 

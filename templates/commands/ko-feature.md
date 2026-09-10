@@ -120,6 +120,8 @@ Tell the user:
 
 Invoke the `superpowers:brainstorming` skill with the project context loaded. The brainstorming process will guide the user through requirements, design, and spec creation. The design spec is saved to `.cursor/specs/`.
 
+**Spec style is enforced** (coding-standards → "Specs and docs"): plain English, no filler; structure over prose — tables for options, Mermaid diagrams for flows/sequences/state; the spec answers what-problem / what-decision / how-to-verify fast, everything else is appendix or cut.
+
 *Fallback (no superpowers):* restate the goal in one sentence, ask scoping questions (don't over-ask), and write the spec yourself to `.cursor/specs/`.
 
 After brainstorming completes and the user approves the spec, do NOT ask what to do next — proceed directly to invoking `superpowers:writing-plans`. After writing-plans creates the plan and execution finishes, do NOT stop — invoke `/ko-verify`.
