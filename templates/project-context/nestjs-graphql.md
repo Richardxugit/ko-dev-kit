@@ -61,7 +61,6 @@ nest build <app-name>
 
 # Test
 yarn test                     # unit tests
-yarn test:pact                # contract tests
 APP_NAME=<name> yarn test:cov # coverage for one app/worker
 
 # Lint
@@ -82,8 +81,6 @@ yarn graphql:publish          # rover schema publish
 |------|--------|---------|
 | Unit | `.spec.ts` | Mock providers, test service logic |
 | Test harness | `.th.spec.ts` | Real NestJS context, mocked externals |
-| Consumer contract | `.pact.ts` | Pact — verify API contract expectations |
-| Provider contract | `.provider.pact.ts` | Pact — verify this service fulfills contracts |
 
 ## Architecture patterns
 - **Federation:** Each service is a subgraph owning its entities (`@Directive('@key(...)')`). Implements `@ResolveReference()` for cross-subgraph resolution.
@@ -95,7 +92,7 @@ yarn graphql:publish          # rover schema publish
 
 ## Conventions
 - Follow `.cursor/rules/nestjs-graphql.mdc`.
-- Skills: `nestjs-patterns`, `graphql-apollo`, `apollo-federation`, `serverless-nestjs`, `pact-contract-testing`.
+- Skills: `nestjs-patterns`, `graphql-apollo`, `apollo-federation`, `serverless-nestjs`.
 - Scaffolding: `/ko-svc-lambda <worker>`, `/ko-svc-nest-app <service>`, `/ko-svc-lib <library>`.
 - **Commits:** `type(scope): KOSM-XXXX: description` (e.g. `feat(orders): KOSM-1234: add loyalty endpoint`). Enforced by Husky + commitlint.
 - **Secrets:** Never commit decrypted `.env.secret`. SSM Parameter Store in production.

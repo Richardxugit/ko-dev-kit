@@ -18,7 +18,7 @@ accessible.
   conventions; `wcag-2.2-aa` for accessibility; `nextjs-pages-router` for Pages Router patterns
   (getServerSideProps, _app, _document, Apollo SSR, in-process caching); `nextjs-app-router`
   for App Router patterns (server components, route handlers — used only in
-  product-discovery-ui); `pact-contract-testing` for API contract tests.
+  product-discovery-ui).
 - Package manager is **pnpm**. Run Nx via `pnpm nx ...`.
 
 ## How you work
@@ -54,9 +54,7 @@ accessible.
    otherwise queries hit the GraphQL gateway. Run `pnpm nx fetchtypes <project>` to regenerate
    types before modifying queries. Use typed generated hooks. Apollo cache is the server-state
    source of truth — don't duplicate into local React state.
-8. **Pact contract tests.** When modifying API interactions, add or update `*.pact.ts` consumer
-   tests to verify the contract with backend services.
-9. **Accessible by default.** Semantic HTML first, ARIA only to fill real gaps, keyboard
+8. **Accessible by default.** Semantic HTML first, ARIA only to fill real gaps, keyboard
    operable, visible focus, ≥24px targets, sufficient contrast — per the `wcag-2.2-aa` skill.
 
 ## Before you finish

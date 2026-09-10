@@ -1,7 +1,7 @@
 ---
 name: ko-verify
 description: Post-implementation verification — checks lint, build, type check, tests, a11y, storybook, and generates a QA report. Run after completing a feature or plan to confirm quality gates pass before handoff.
-skills-optional: [wcag-2.2-aa, unit-of-work]
+skills-optional: [wcag-2.2-aa]
 ---
 
 # Verify Implementation
@@ -83,7 +83,7 @@ Check that the implementation has appropriate tests at each level. What "appropr
 | **Unit tests** | Services/business logic have `*.spec.ts` with providers mocked | Check spec files co-located with changed services |
 | **Resolver/controller tests** | GraphQL resolvers / REST controllers tested | Grep for `Test.createTestingModule` and resolver spec files |
 | **e2e tests** | Endpoints have Supertest e2e coverage with a booted module | Check `test/` or `*.e2e-spec.ts` for the changed feature |
-| **Contract tests** | Federation/consumer contracts covered (if pact is used) | Grep for `@pact-foundation` / pact files for changed subgraph |
+| **Contract tests** | Federation/consumer contracts covered, if the repo uses contract testing | Grep for contract-test files for the changed subgraph |
 
 Run the test target and report results. Note tests that passed on the base but now fail (regressions).
 
@@ -292,6 +292,6 @@ Only **introduced** failures count against the feature. `N/A` gates and `PRE-EXI
 | Browser verification SKIPPED (no runner) | "Manual browser testing required before review" |
 | Any check has introduced failures | "Address N issues before review" with the specific introduced issues listed |
 
-**Unit-of-work bolt log:** if the verified work belongs to a unit (`.cursor/specs/*/stories.md` — see the `unit-of-work` skill, if installed), append a bolt-log row (`verify` / `/ko-verify` / gate outcome summary, e.g. "all gates pass" or "2 introduced failures"). Append-only — never edit prior rows.
+**Unit-of-work bolt log:** if the verified work belongs to a unit (`.cursor/specs/*/stories.md` — only when the `unit-of-work` skill is installed, shipped by ko-product-kit), append a bolt-log row (`verify` / `/ko-verify` / gate outcome summary, e.g. "all gates pass" or "2 introduced failures"). Append-only — never edit prior rows.
 
 The recommendation cannot be "Ready for code review" if browser verification is FAIL or SKIPPED-without-a-runner on a UI archetype — even if all other checks pass. Finish by suggesting `/ko-review` on the diff.

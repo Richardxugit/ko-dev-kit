@@ -2,7 +2,6 @@
 name: ko-release-verify
 description: Verify a release scoped by Jira tickets — the Buildkite deploy pipeline + its last-prod→nonProd commit range is the unit of work. Identify the pipelines the tickets touch, enumerate everything that ships in that range (including hitchhiker PRs), assess prod safety, and generate a pipeline-organized runbook. Read-only and generation only — NEVER deploys or writes to Buildkite.
 args: "<Jira epic/ticket keys, e.g. KOSM-1234 or KOSM-1234,KOSM-1301>"
-skills-optional: [unit-of-work]
 ---
 
 # Release Verify: Tickets → Pipelines → Commit Range → Runbook
@@ -83,7 +82,7 @@ State the counts plainly: *"Promoting `<pipeline>` build #<release build> ships 
 Risk-assess **every** PR in the range (yours + hitchhikers) — they ship as one unit. For each, read the diff for:
 
 - **Migrations / data** — backwards-compatible? decoupled from the code deploy?
-- **API / GraphQL contracts** — removed/renamed subgraph fields break the router + clients; REST shape changes; pact/contract coverage.
+- **API / GraphQL contracts** — removed/renamed subgraph fields break the router + clients; REST shape changes; contract coverage (if the repo uses contract testing).
 - **Shared libraries** — bumps that fan out to other apps. <!-- /ko-onboard: note the shared-lib rebuild convention, if any -->
 - **Config / infra** — env vars, IaC (cdk/serverless) that must be applied before code.
 - **Dependencies** — major upgrades / lockfile churn on critical paths.
@@ -104,7 +103,7 @@ Write `docs/releases/<version-or-slug>.md` (or `.cursor/specs/release-<slug>/run
 3. **Per pipeline** — `PROD_SHA…RELEASE_SHA`; the **release build number** to promote (and the note that newer nonProd builds are excluded); your-tickets vs hitchhikers with counts; the risk verdict; the flag plan; the **deploy step** — *"Unblock Deploy to Production on build **#<release build>**"* (the specific build, not the latest — *the human triggers it; this command never does*); post-deploy checks <!-- /ko-onboard: name the sanity run command + monitors -->; rollback (revert path, flag kill-switches, data notes).
 4. **Blockers & follow-ups** — NOT DEPLOYED tickets, NOT FOUND tickets, unreviewed hitchhikers needing sign-off.
 
-Finally, if an active unit of work covers this release (see the `unit-of-work` skill when installed): set its Phase to `operations` (or `done` once shipped) and append a release bolt-log row.
+Finally, if an active unit of work covers this release (only when the `unit-of-work` skill is installed — shipped by ko-product-kit): set its Phase to `operations` (or `done` once shipped) and append a release bolt-log row.
 
 ## Boundaries
 

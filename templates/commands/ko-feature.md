@@ -1,14 +1,13 @@
 ---
 name: ko-feature
 description: Start a new feature with archetype-aware context, then hand off to superpowers brainstorming
-skills-optional: [unit-of-work]
 ---
 
 # Feature Workflow
 
 ## Prerequisites
 
-This command requires the **superpowers** skills for the methodology phases (brainstorming, planning, implementation). If `superpowers:brainstorming` is not available, install it via the [superpowers repo](https://github.com/obra/superpowers) first — the inline steps below are orchestration only (archetype context, unit-of-work, specs/) and degrade to a summary without the methodology skills.
+This command requires the **superpowers** skills for the methodology phases (brainstorming, planning, implementation). If `superpowers:brainstorming` is not available, install it via the [superpowers repo](https://github.com/obra/superpowers) first — the inline steps below are orchestration only (archetype context, specs/) and degrade to a summary without the methodology skills.
 
 ## Profiles
 
@@ -54,7 +53,7 @@ Before any design work, check for leftovers from prior attempts at this feature:
 
 1. `git status --porcelain` — flag untracked files whose names relate to the feature (e.g. a stray `WishlistCard.test.tsx` from an abandoned run).
 2. Check `.cursor/specs/` for existing files matching the feature name.
-3. **Unit-of-work check** (if the `unit-of-work` skill is installed): glob `.cursor/specs/*/stories.md` for a unit matching the feature (slug, title, or story text). If one matches, **claim it** per the skill's protocol — set the story to `in-progress`, Phase to `construction`, append a bolt-log row (`construction: story N` / `/ko-feature`) — and save this feature's spec/plan into the unit's directory. The product pipeline (`/ko-slice` skeletons, deepened by `/ko-groom`) already elaborated the requirement, so brainstorming (Step 4) starts from the unit's stories and ACs instead of a blank page.
+3. **Unit-of-work check** (only if the `unit-of-work` skill is installed — shipped by ko-product-kit, not this kit): glob `.cursor/specs/*/stories.md` for a unit matching the feature (slug, title, or story text). If one matches, **claim it** per the skill's protocol — set the story to `in-progress`, Phase to `construction`, append a bolt-log row (`construction: story N` / `/ko-feature`) — and save this feature's spec/plan into the unit's directory. The product pipeline (`/ko-slice` skeletons, deepened by `/ko-groom`) already elaborated the requirement, so brainstorming (Step 4) starts from the unit's stories and ACs instead of a blank page.
 
 If anything is found, list it and ask the user: resume from it, delete it, or ignore it. Do not silently design on top of a dirty starting state.
 

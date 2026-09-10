@@ -155,14 +155,13 @@ merge manually, then delete the `.kit-update` file.
 - rule: `coding-standards.mdc` (always applied)
 - commands: `ko-onboard`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-verify`
 - commands (all except design-system): `ko-feature`, `ko-spike`, `ko-implement`
-- skill (all except design-system): `unit-of-work`
 - agents: `code-reviewer`, `review-specialist`
 - hook: `privacy-block`; settings: `cli.json` (`.cursor/mcp.json` is generated per archetype set — union of recommended servers)
 
 | Archetype | rule | skills | commands | agent |
 |---|---|---|---|---|
-| `fe-nx` | `fe-nx.mdc` | `nx-monorepo`, `ts-react-patterns`, `nextjs-app-router`, `nextjs-pages-router`, `pact-contract-testing`, `wcag-2.2-aa` | `ko-lib-package` | `frontend-developer` |
-| `nestjs-graphql` | `nestjs-graphql.mdc` | `nestjs-patterns`, `graphql-apollo`, `apollo-federation`, `serverless-nestjs`, `pact-contract-testing` | `ko-svc-lambda`, `ko-svc-nest-app`, `ko-svc-lib` | `backend-developer` |
+| `fe-nx` | `fe-nx.mdc` | `nx-monorepo`, `ts-react-patterns`, `nextjs-app-router`, `nextjs-pages-router`, `wcag-2.2-aa` | `ko-lib-package` | `frontend-developer` |
+| `nestjs-graphql` | `nestjs-graphql.mdc` | `nestjs-patterns`, `graphql-apollo`, `apollo-federation`, `serverless-nestjs` | `ko-svc-lambda`, `ko-svc-nest-app`, `ko-svc-lib` | `backend-developer` |
 | `design-system` | `design-system.mdc` | `storybook`, `mui-theming`, `component-api-design`, `multi-brand-theming`, `wcag-2.2-aa` | `ko-ds-component` | `design-system-engineer` |
 | `nextjs-app` | `nextjs-app.mdc` | `ts-react-patterns`, `nextjs-app-router`, `nextjs-pages-router`, `wcag-2.2-aa` | — | `frontend-developer` |
 | `react-app` | `react-app.mdc` | `ts-react-patterns`, `wcag-2.2-aa` | — | `frontend-developer` |
