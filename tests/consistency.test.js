@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { ARCHETYPES } from '../src/detect.js';
 import { ARCHETYPE_LABELS } from '../src/init.js';
-import { ARCHETYPE_RESOURCES, getCommandEntries } from '../src/scaffold.js';
+import { ARCHETYPE_RESOURCES, getCommandEntries, MANUAL_INSTALL_COMMANDS } from '../src/scaffold.js';
 import { parseFrontmatter } from '../src/scaffold-core/index.js';
 
 const templateDir = path.resolve('templates');
@@ -183,6 +183,24 @@ describe('cross-kit reference lint', () => {
     }
   });
 
+  it('manual-tier command references are guarded as conditional', () => {
+    // Commands not auto-installed by init must never be referenced unconditionally —
+    // same failure mode as the ko-onboard → ko-knowledge-gen bug.
+    const GUARD = /if (it is )?installed|when installed|manual[- ]tier|install command|not installed|not this kit/i;
+    for (const file of templateFiles) {
+      if (file.endsWith(`${path.sep}ko-onboard.md`)) continue; // onboard carries the canonical guarded wording
+      const lines = fs.readFileSync(file, 'utf-8').split('\n');
+      lines.forEach((line, i) => {
+        for (const cmd of MANUAL_INSTALL_COMMANDS) {
+          if (file.endsWith(`${path.sep}${cmd}.md`)) continue; // a command may reference itself freely
+          if (!new RegExp(`(?<![\\w/@-])/${cmd}(?![a-z0-9-])`).test(line)) continue;
+          const guarded = GUARD.test(line) || GUARD.test(lines.slice(Math.max(0, i - 3), i + 1).join(' '));
+          expect(guarded, `${path.relative(templateDir, file)}:${i + 1} references manual-tier "/${cmd}" without an install guard`).toBe(true);
+        }
+      });
+    }
+  });
+
   it('external references are guarded as conditional in the text', () => {
     const GUARD = /if installed|when installed|ko-product-kit|ko-qa-kit|not this kit/i;
     for (const file of templateFiles) {
@@ -191,7 +209,7 @@ describe('cross-kit reference lint', () => {
       const lines = content.split('\n');
       lines.forEach((line, i) => {
         for (const ext of [...EXTERNAL_COMMANDS]) {
-          const re = new RegExp(`(?<![\\w/@-])/${ext}([.\\s]|$)`);
+          const re = new RegExp(`(?<![\\w/@-])/${ext}(?![a-z0-9-])`);
           if (!re.test(line)) continue;
           // allow format-spec examples (tables/bolt logs) — the section header carries the guard
           const section = lines.slice(0, i + 1).reverse().find(l => l.startsWith('#')) ?? '';

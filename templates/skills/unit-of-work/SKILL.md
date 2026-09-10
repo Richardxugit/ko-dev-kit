@@ -76,4 +76,4 @@ Phases: `sliced` → `groomed` (the inception stages, owned by the product pipel
 - `/ko-feature` claims a unit's story when the feature maps to one (its clean-slate check discovers them) and logs construction bolts.
 - `/ko-implement` picks up `in-progress` stories across sessions and marks them `done` on completion.
 - `/ko-verify` appends a verification bolt-log row with the gate results.
-- `/ko-release-verify` flips Phase to `operations`/`done` and logs the release bolt.
+- `/ko-release-verify` flips Phase to `operations`/`done` and logs the release bolt. (Manual-tier command — when installed; without it, whoever runs the release flips the Phase by hand.)

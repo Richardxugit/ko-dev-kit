@@ -86,8 +86,10 @@ Summarize the key differences between the template and the customized version.
 ## Step 6: Offer Knowledge Base Generation
 
 1. Check if `.cursor/knowledge-base/` already exists — if yes, skip this step
-2. Ask the user: "Would you like me to generate a knowledge base for this repo? This creates detailed, topic-scoped docs in `.cursor/knowledge-base/` that help Cursor understand this codebase deeply. You can regenerate it anytime with `/ko-knowledge-gen`."
-3. If the user accepts, invoke `/ko-knowledge-gen`
+2. Check if `.cursor/commands/ko-knowledge-gen.md` is installed — it is a manual-tier command and may not be:
+   - **Installed** → ask the user: "Would you like me to generate a knowledge base for this repo? This creates detailed, topic-scoped docs in `.cursor/knowledge-base/` that help Cursor understand this codebase deeply. You can regenerate it anytime with `/ko-knowledge-gen`."
+   - **Not installed** → ask instead: "This kit ships a `/ko-knowledge-gen` command that generates topic-scoped docs in `.cursor/knowledge-base/`. It is not installed by default — install it now with `ko-dev-kit install command ko-knowledge-gen` and generate the knowledge base?" Only offer once; if they decline, move on.
+3. If the user accepts and the command needed installing: run the install command in the terminal first, then invoke `/ko-knowledge-gen`
 4. If the user declines, continue without further nudging
 
 ## Important
