@@ -37,8 +37,9 @@ describe('archetype consistency', () => {
           continue;
         }
         const asFile = path.join(templateDir, dir, `${name}.md`);
+        const asMdc = path.join(templateDir, dir, `${name}.mdc`);
         const asDir = path.join(templateDir, dir, name);
-        expect(fs.pathExistsSync(asFile) || fs.pathExistsSync(asDir), `missing template for ${dir}/${name}`).toBe(true);
+        expect(fs.pathExistsSync(asFile) || fs.pathExistsSync(asMdc) || fs.pathExistsSync(asDir), `missing template for ${dir}/${name}`).toBe(true);
       }
     }
   });

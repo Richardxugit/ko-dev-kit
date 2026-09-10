@@ -7,6 +7,11 @@ import * as engine from './scaffold-core/index.js';
 // installed for all 3, matching the old "generic dev-workflow" behavior
 // without needing to enumerate it.
 export const ARCHETYPE_RESOURCES = {
+  rules: {
+    'fe-nx': ['fe-nx'],
+    'nestjs-graphql': ['nestjs-graphql'],
+    'design-system': ['design-system'],
+  },
   agents: {
     'frontend-developer': ['fe-nx'],
     'backend-developer': ['nestjs-graphql'],

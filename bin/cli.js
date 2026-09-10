@@ -46,7 +46,7 @@ program
 
 program
   .command('uninstall <type> <name>')
-  .description('Remove a single installed resource (skill, agent, command, hook) — kept if another installed kit still needs it')
+  .description('Remove a single installed resource (skill, agent, command, rule, hook) — kept if another installed kit still needs it')
   .option('-g, --global', 'Uninstall from ~/.cursor/')
   .action(async (type, name, opts) => {
     const targetDir = opts.global ? os.homedir() : process.cwd();

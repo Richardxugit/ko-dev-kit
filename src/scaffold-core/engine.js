@@ -6,7 +6,7 @@ import { otherKitsClaim, readManifest, writeManifest } from './manifest.js';
 
 // Kit-managed resource directories. Copied into .cursor/<dir>/ and overwritten
 // by default (the kit owns them). Archetype filtering applies via ARCHETYPE_RESOURCES.
-const KIT_MANAGED_DIRS = ['agents', 'commands', 'skills'];
+const KIT_MANAGED_DIRS = ['agents', 'commands', 'skills', 'rules'];
 
 export function getCommandEntries(templateDir) {
   const commandsDir = path.join(templateDir, 'commands');
@@ -96,26 +96,7 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
     created, skipped
   );
 
-  const codingStandardsSrc = path.join(templateDir, 'rules', 'coding-standards.mdc');
-  if (await fs.pathExists(codingStandardsSrc)) {
-    owned.push(path.join('.cursor', 'rules', 'coding-standards.mdc'));
-    await copyOverwrite(
-      codingStandardsSrc,
-      path.join(projectDir, '.cursor', 'rules', 'coding-standards.mdc'),
-      '.cursor/rules/coding-standards.mdc',
-      created, updated
-    );
-  }
-
   if (archetype) {
-    owned.push(path.join('.cursor', 'rules', `${archetype}.mdc`));
-    await copyOverwrite(
-      path.join(templateDir, 'rules', `${archetype}.mdc`),
-      path.join(projectDir, '.cursor', 'rules', `${archetype}.mdc`),
-      `.cursor/rules/${archetype}.mdc`,
-      created, updated
-    );
-
     await copyIfNotExists(
       path.join(templateDir, 'project-context', `${archetype}.md`),
       path.join(projectDir, 'AGENTS.md'),
@@ -284,7 +265,7 @@ export async function installResource(projectDir, type, name, templateDir, optio
   // Normalize type: accept singular or plural
   const dir = KIT_MANAGED_DIRS.includes(type) ? type : KIT_MANAGED_DIRS.find(d => d === type + 's');
   if (!dir) {
-    return { error: `Unknown resource type "${type}". Valid types: skill, agent, command, hook` };
+    return { error: `Unknown resource type "${type}". Valid types: skill, agent, command, rule, hook` };
   }
 
   const srcDir = path.join(templateDir, dir);
@@ -407,7 +388,7 @@ export async function uninstallResource(projectDir, type, name, templateDir, sel
   } else {
     const dir = KIT_MANAGED_DIRS.includes(type) ? type : KIT_MANAGED_DIRS.find(d => d === type + 's');
     if (!dir) {
-      return { error: `Unknown resource type "${type}". Valid types: skill, agent, command, hook` };
+      return { error: `Unknown resource type "${type}". Valid types: skill, agent, command, rule, hook` };
     }
     if (dir === 'commands') {
       relPath = path.join('.cursor', 'commands', `${name}.md`);

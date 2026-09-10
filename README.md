@@ -38,7 +38,7 @@ Run inside a repo:
 ko-dev-kit init                              # detect archetype, scaffold .cursor/ + AGENTS.md, prune mismatches
 ko-dev-kit init --archetype nestjs-graphql    # non-interactive (CI/scripts)
 ko-dev-kit prune                              # remove resources that don't match the archetype
-ko-dev-kit install <type> <name> [-g]         # install one resource (skill|agent|command|hook)
+ko-dev-kit install <type> <name> [-g]         # install one resource (skill|agent|command|rule|hook)
 ko-dev-kit uninstall <type> <name> [-g]       # remove one installed resource (kept if another kit still needs it)
 ko-dev-kit list                               # list available resources
 ko-dev-kit export <command-name> [-o dir] [--plugin]   # export a command + dependencies as a portable bundle
