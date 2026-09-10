@@ -46,8 +46,12 @@ const FIXTURES = [
     reject: ['.cursor/rules/nextjs-app.mdc', '.cursor/skills/nextjs-app-router/SKILL.md', '.cursor/commands/ko-svc-lib.md'],
   },
   {
-    name: 'nestjs-graphql,react-app', // React + Nest full-stack repo
-    files: { 'package.json': { dependencies: { '@nestjs/core': '^10.0.0', react: '^19.0.0' } }, 'nest-cli.json': {} },
+    name: 'nestjs-graphql,react-app', // React + Nest full-stack repo (react lives in a sub-package)
+    files: {
+      'package.json': { dependencies: { '@nestjs/core': '^10.0.0' } },
+      'nest-cli.json': {},
+      'apps/web/package.json': { dependencies: { react: '^19.0.0', 'react-dom': '^19.0.0' } },
+    },
     expect: ['.cursor/rules/nestjs-graphql.mdc', '.cursor/rules/react-app.mdc', '.cursor/commands/ko-svc-lib.md', '.cursor/agents/frontend-developer.md', '.cursor/agents/backend-developer.md'],
     reject: ['.cursor/rules/fe-nx.mdc', '.cursor/commands/ko-ds-component.md'],
   },
