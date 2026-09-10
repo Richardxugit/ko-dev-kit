@@ -1,6 +1,6 @@
 ---
 name: storybook
-description: Author Storybook stories (CSF3) for React + MUI components — args/argTypes/controls, autodocs, key states, play() interaction tests, the a11y addon, and ThemeProvider decorators. Use whenever creating or editing a *.stories.tsx file, scaffolding stories for a component, or running /ko-story.
+description: Author Storybook stories (CSF3) for React + MUI components — args/argTypes/controls, autodocs, key states, play() interaction tests, the a11y addon, and ThemeProvider decorators. Use whenever creating or editing a *.stories.tsx file, scaffolding stories for a component.
 ---
 
 # Storybook Authoring

@@ -16,10 +16,13 @@ Built for Kmart/Target AU monorepos but generic enough for any TypeScript projec
 | Archetype | Stack | Detected by |
 |---|---|---|
 | `fe-nx` | TypeScript + pnpm + **Nx** + Next.js 15 + styled-components + Apollo Client | `nx.json`, or an `@nx/*` / `@nrwl/*` dependency |
-| `nestjs-graphql` | **NestJS** CLI monorepo + Apollo Federation + Lambda workers | `@nestjs/core` dependency |
-| `design-system` | **Storybook 10 + MUI v6** multi-brand component library | `@mui/material` + an `@storybook/*` dependency |
+| `nestjs-graphql` | **NestJS** CLI monorepo + Apollo Federation + Lambda workers | `@nestjs/core` **plus** `nest-cli.json` or `@nestjs/graphql` |
+| `design-system` | **Storybook 10 + MUI v6** multi-brand component library | `@mui/material` + a `@storybook/*` dependency **plus** a `.storybook/` dir |
 
-Detection priority: `nestjs-graphql` → `design-system` → `fe-nx`.
+A repo can match **multiple archetypes** (e.g. an FE+BE monorepo with both `nx.json` and
+`nest-cli.json`) — `init` then installs the union of their resources. Detection order
+(`nestjs-graphql` → `design-system` → `fe-nx`) only decides which archetype's `AGENTS.md`
+and `mcp.json` variant win when several match. Every detection prints its evidence.
 
 ## Install
 
@@ -37,9 +40,9 @@ Run inside a repo:
 ```bash
 ko-dev-kit init                              # detect archetype, scaffold .cursor/ + AGENTS.md, prune mismatches
 ko-dev-kit init --archetype nestjs-graphql    # non-interactive (CI/scripts)
+ko-dev-kit init --archetype nestjs-graphql,fe-nx # multi-archetype monorepo
 ko-dev-kit prune                              # remove resources that don't match the archetype
-ko-dev-kit install <type> <name> [-g]         # install one resource (skill|agent|command|hook)
-ko-dev-kit install folder dev [--all] [-g]    # install every dev/ command + its dependency union
+ko-dev-kit install <type> <name> [-g]         # install one resource (skill|agent|command|rule|hook)
 ko-dev-kit uninstall <type> <name> [-g]       # remove one installed resource (kept if another kit still needs it)
 ko-dev-kit list                               # list available resources
 ko-dev-kit export <command-name> [-o dir] [--plugin]   # export a command + dependencies as a portable bundle
@@ -107,8 +110,7 @@ commands without them fall back to a body scan.
 ### Mint a custom plugin
 
 ```bash
-# Interactive — asks for a plugin name, then a flat, space-select list of every dev/ command
-# (ko-dev-kit has a single command folder, so there's no folder-browsing step)
+# Interactive — asks for a plugin name, then a flat, space-select list of every command
 ko-dev-kit export-plugin
 
 # Non-interactive
@@ -128,7 +130,7 @@ Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo an
 | Slash commands | `.cursor/commands/*.md` (`/ko-*`) | kit-managed (overwritten on `init`) |
 | Skills | `.cursor/skills/<name>/SKILL.md` (+ `references/`) | kit-managed |
 | Subagents | `.cursor/agents/*.md` | kit-managed |
-| Rules | `.cursor/rules/*.mdc` | user-protected (never overwritten) |
+| Rules | `.cursor/rules/*.mdc` | merge-protected (see below) |
 | Project context | root `AGENTS.md` | user-protected |
 | Privacy hook | `.cursor/hooks/privacy-block.cjs` + `.cursor/hooks.json` | script kit-managed; `hooks.json` user-protected |
 | MCP servers | `.cursor/mcp.json` | user-protected |
@@ -137,12 +139,17 @@ Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo an
 "User-protected" files are created once and never overwritten — edit them freely. Re-running
 `init` refreshes the kit-managed commands/skills/agents.
 
+Rules are **merge-protected**: `init` overwrites a rule only when its on-disk content still
+matches the hash recorded in the manifest (i.e. you never edited it). If you did edit it, your
+version stays and the kit's new version is written to `<rule>.mdc.kit-update` next to it —
+merge manually, then delete the `.kit-update` file.
+
 ## Resource matrix
 
 **Shared (`fe-nx`, `nestjs-graphql`, `design-system` — every archetype in this kit):**
 - rule: `coding-standards.mdc` (always applied)
-- commands: `ko-onboard`, `ko-help`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-review-team`, `ko-verify`, `ko-pr-desc`, `ko-release-verify`
-- commands (all except design-system): `ko-feature`, `ko-implement`, `ko-knowledge-gen`
+- commands: `ko-onboard`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-verify`
+- commands (all except design-system): `ko-feature`, `ko-spike`, `ko-implement`
 - skill (all except design-system): `unit-of-work`
 - agents: `code-reviewer`, `review-specialist`
 - hook: `privacy-block`; settings: `mcp.json`, `cli.json`
@@ -159,25 +166,24 @@ Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo an
 | Command | Purpose |
 |---------|---------|
 | `/ko-onboard` | Explore repo, fill AGENTS.md placeholders with real values |
-| `/ko-help` | List available `/ko-*` commands for this archetype |
 | `/ko-bugfix` | Systematic debugging (reproduce → locate → fix → verify) |
 | `/ko-test` | Generate appropriate tests for a target file |
-| `/ko-review` | Review current diff via the code-reviewer agent |
-| `/ko-review-team` | Multi-agent PR review — a team of specialists in one round, consolidated verdict |
+| `/ko-review [--team]` | Review a change set — single pass by default; `--team` dispatches specialist reviewers (compliance, regression, simplicity, frontend, backend, tests) with a consolidated verdict |
 | `/ko-verify` | Run build/lint/tests and confirm they pass |
-| `/ko-pr-desc` | Generate PR title and description from diff + branch name |
-| `/ko-release-verify` | Jira tickets → related PRs → Buildkite deploy state (nonProd/prod) → risk + flags → release runbook (never deploys) |
 
 ### Shared commands (`fe-nx` / `nestjs-graphql` only)
 | Command | Purpose |
 |---------|---------|
 | `/ko-feature` | End-to-end feature workflow (clarify → design → implement → verify); claims a matching unit of work |
+| `/ko-spike` | Timeboxed throwaway experiment → findings doc + go/no-go decision; never merges |
 | `/ko-implement` | Resume/execute a plan from `.cursor/specs/` with checkpoints; picks up in-progress unit stories |
-| `/ko-knowledge-gen` | Generate knowledge base — full repo or focused topic (e.g. `/ko-knowledge-gen flybuys-linking`) |
 
-### Manual-install only
+### Manual-install only (SDLC periphery — install when needed)
 | Command | Purpose | Install |
 |---------|---------|---------|
+| `/ko-pr-desc` | Generate PR title and description from diff + branch name | `ko-dev-kit install command ko-pr-desc` |
+| `/ko-release-verify` | Jira tickets → PRs → Buildkite deploy state → release runbook (never deploys) | `ko-dev-kit install command ko-release-verify` |
+| `/ko-knowledge-gen` | Generate knowledge base — full repo or focused topic | `ko-dev-kit install command ko-knowledge-gen` |
 | `/ko-new-command` | Create a new custom `/ko-*` command from plain-English description | `ko-dev-kit install command ko-new-command` |
 
 ### fe-nx commands
@@ -197,7 +203,7 @@ Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo an
 |---------|---------|
 | `/ko-ds-component` | Scaffold MUI v6 component with 6-file structure. Two profiles: standard (design ready) and discovery (brainstorm API first) |
 
-Note: design-system excludes `/ko-feature`, `/ko-implement`, `/ko-knowledge-gen` — component work is self-contained via `/ko-ds-component`.
+Note: design-system excludes `/ko-feature`, `/ko-spike`, `/ko-implement` — component work is self-contained via `/ko-ds-component`.
 
 ## Commit conventions
 
@@ -252,8 +258,8 @@ ko-dev-kit/
 │   └── scaffold-core/    # Generic scaffolding engine: frontmatter, manifest, engine, export
 ├── templates/
 │   ├── agents/           # Subagent definitions (5 agents)
-│   ├── agents-md/        # AGENTS.md templates per archetype (3 files)
-│   ├── commands/dev/     # Slash command definitions (18 commands)
+│   ├── project-context/  # AGENTS.md templates per archetype (3 files)
+│   ├── commands/         # Slash command definitions (18 commands)
 │   ├── hooks/            # Privacy hook script + config
 │   ├── rules/            # .mdc rule files (4 rules)
 │   ├── settings/         # CLI permissions + MCP config

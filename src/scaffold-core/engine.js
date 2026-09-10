@@ -2,38 +2,22 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { parseFrontmatter } from './frontmatter.js';
-import { otherKitsClaim, readManifest, writeManifest } from './manifest.js';
+import { hashFile, otherKitsClaim, readManifest, writeManifest } from './manifest.js';
 
 // Kit-managed resource directories. Copied into .cursor/<dir>/ and overwritten
 // by default (the kit owns them). Archetype filtering applies via ARCHETYPE_RESOURCES.
-const KIT_MANAGED_DIRS = ['agents', 'commands', 'skills'];
+const KIT_MANAGED_DIRS = ['agents', 'commands', 'skills', 'rules'];
 
 export function getCommandEntries(templateDir) {
   const commandsDir = path.join(templateDir, 'commands');
   if (!fs.pathExistsSync(commandsDir)) return [];
-  const entries = [];
-  const dirents = fs.readdirSync(commandsDir, { withFileTypes: true })
-    .sort((a, b) => a.name.localeCompare(b.name));
-  for (const dirent of dirents) {
-    if (dirent.isDirectory()) {
-      const files = fs.readdirSync(path.join(commandsDir, dirent.name)).sort();
-      for (const f of files) {
-        if (!f.endsWith('.md')) continue;
-        entries.push({
-          name: f.replace(/\.md$/, ''),
-          folder: dirent.name,
-          file: path.join(commandsDir, dirent.name, f),
-        });
-      }
-    } else if (dirent.name.endsWith('.md')) {
-      entries.push({
-        name: dirent.name.replace(/\.md$/, ''),
-        folder: null,
-        file: path.join(commandsDir, dirent.name),
-      });
-    }
-  }
-  return entries;
+  return fs.readdirSync(commandsDir, { withFileTypes: true })
+    .filter(d => d.isFile() && d.name.endsWith('.md'))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(d => ({
+      name: d.name.replace(/\.md$/, ''),
+      file: path.join(commandsDir, d.name),
+    }));
 }
 
 const SKIP_PATTERNS = [
@@ -42,19 +26,20 @@ const SKIP_PATTERNS = [
   '__pycache__',   // Python cache
   '.pyc',          // compiled Python
   'specs',         // .cursor/specs/ is user data, never overwrite
-  'ko-new-command', // manual-install only (via `ko-cursor-kit install command ko-new-command`)
 ];
 
 export async function scaffoldProject(projectDir, archetype, templateDir, resourceMap, options = {}) {
-  const { overwrite = true } = options;
+  const { overwrite = true, manifest = null, manualInstall = [] } = options;
   const created = [];
   const updated = [];
   const skipped = [];
+  const mergeNeeded = [];
   const owned = [];
-  const targets = archetype ? [archetype] : [];
+  const targets = archetype == null ? [] : [archetype].flat();
 
   for (const entry of getCommandEntries(templateDir)) {
     if (SKIP_PATTERNS.some(p => `${entry.name}.md`.includes(p))) continue;
+    if (manualInstall.includes(entry.name)) continue; // SDLC periphery — `install command <name>` on demand
     const restrictions = resourceMap.commands?.[entry.name];
     if (restrictions && !restrictions.some(r => targets.includes(r))) continue;
     const relPath = path.join('.cursor', 'commands', `${entry.name}.md`);
@@ -81,7 +66,10 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
       const dest = path.join(projectDir, '.cursor', dir, rel);
       const relPath = path.join('.cursor', dir, rel);
       owned.push(relPath);
-      if (overwrite) {
+      if (dir === 'rules' && overwrite) {
+        // Rules are user-editable: never clobber local edits — see copyRuleProtected.
+        await copyRuleProtected(file, dest, relPath, manifest, created, updated, mergeNeeded);
+      } else if (overwrite) {
         await copyOverwrite(file, dest, relPath, created, updated);
       } else {
         await copyIfNotExists(file, dest, relPath, created, skipped);
@@ -106,34 +94,15 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
   }
 
   await copyIfNotExists(
-    path.join(templateDir, 'hooks', 'hooks.json'),
+    path.join(templateDir, 'settings', 'hooks.json'),
     path.join(projectDir, '.cursor', 'hooks.json'),
     '.cursor/hooks.json',
     created, skipped
   );
 
-  const codingStandardsSrc = path.join(templateDir, 'rules', 'coding-standards.mdc');
-  if (await fs.pathExists(codingStandardsSrc)) {
-    owned.push(path.join('.cursor', 'rules', 'coding-standards.mdc'));
-    await copyOverwrite(
-      codingStandardsSrc,
-      path.join(projectDir, '.cursor', 'rules', 'coding-standards.mdc'),
-      '.cursor/rules/coding-standards.mdc',
-      created, updated
-    );
-  }
-
-  if (archetype) {
-    owned.push(path.join('.cursor', 'rules', `${archetype}.mdc`));
-    await copyOverwrite(
-      path.join(templateDir, 'rules', `${archetype}.mdc`),
-      path.join(projectDir, '.cursor', 'rules', `${archetype}.mdc`),
-      `.cursor/rules/${archetype}.mdc`,
-      created, updated
-    );
-
+  if (targets.length > 0) {
     await copyIfNotExists(
-      path.join(templateDir, 'agents-md', `${archetype}.md`),
+      path.join(templateDir, 'project-context', `${targets[0]}.md`),
       path.join(projectDir, 'AGENTS.md'),
       'AGENTS.md',
       created, skipped
@@ -141,7 +110,7 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
   }
 
   await copyIfNotExists(
-    await resolveMcpTemplate(templateDir, archetype),
+    await resolveMcpTemplate(templateDir, targets),
     path.join(projectDir, '.cursor', 'mcp.json'),
     '.cursor/mcp.json',
     created, skipped
@@ -153,11 +122,11 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
     created, skipped
   );
 
-  return { created, updated, skipped, owned };
+  return { created, updated, skipped, mergeNeeded, owned };
 }
 
-async function resolveMcpTemplate(templateDir, archetype) {
-  if (archetype) {
+async function resolveMcpTemplate(templateDir, archetypes) {
+  for (const archetype of [archetypes].flat().filter(Boolean)) {
     const variant = path.join(templateDir, 'settings', `mcp.${archetype}.json`);
     if (await fs.pathExists(variant)) return variant;
   }
@@ -165,7 +134,7 @@ async function resolveMcpTemplate(templateDir, archetype) {
 }
 
 export async function pruneProject(projectDir, archetype, templateDir, resourceMap) {
-  const targets = [archetype];
+  const targets = [archetype].flat();
   const removed = [];
 
   for (const dir of KIT_MANAGED_DIRS) {
@@ -300,7 +269,7 @@ export async function installResource(projectDir, type, name, templateDir, optio
   // Normalize type: accept singular or plural
   const dir = KIT_MANAGED_DIRS.includes(type) ? type : KIT_MANAGED_DIRS.find(d => d === type + 's');
   if (!dir) {
-    return { error: `Unknown resource type "${type}". Valid types: skill, agent, command, hook` };
+    return { error: `Unknown resource type "${type}". Valid types: skill, agent, command, rule, hook` };
   }
 
   const srcDir = path.join(templateDir, dir);
@@ -308,7 +277,6 @@ export async function installResource(projectDir, type, name, templateDir, optio
     return { error: `No templates found for type "${dir}"` };
   }
 
-  // Commands: foldered source, flat install.
   if (dir === 'commands') {
     const entry = getCommandEntries(templateDir).find(e => e.name === name);
     if (!entry) {
@@ -365,90 +333,29 @@ export async function installResource(projectDir, type, name, templateDir, optio
   return { created, updated, skipped };
 }
 
-export async function installFolder(projectDir, folderName, templateDir, resourceMap, options = {}) {
-  const { overwrite = true, all = false, archetype = null, includeCodingStandards = true } = options;
-
-  const folderEntries = getCommandEntries(templateDir)
-    .filter(e => e.folder === folderName)
-    .filter(e => !SKIP_PATTERNS.some(p => `${e.name}.md`.includes(p)));
-  if (folderEntries.length === 0) {
-    const folders = [...new Set(getCommandEntries(templateDir).map(e => e.folder).filter(Boolean))];
-    return { error: `Unknown or empty command folder "${folderName}". Available: ${folders.join(', ')}` };
+/**
+ * Rules (and only rules) are user-editable kit files. Overwrite is allowed
+ * only when the on-disk file still matches the hash the kit recorded in the
+ * manifest (i.e. the user never touched it). Otherwise the kit version is
+ * written to <file>.kit-update and the user merges manually — their edits win.
+ */
+async function copyRuleProtected(src, dest, relPath, manifest, created, updated, mergeNeeded) {
+  if (!await fs.pathExists(src)) return;
+  if (!await fs.pathExists(dest)) {
+    await fs.ensureDir(path.dirname(dest));
+    await fs.copy(src, dest);
+    created.push(relPath);
+    return;
   }
-
-  const matches = (restrictions) =>
-    !restrictions
-    || restrictions.includes(folderName)
-    || (archetype != null && restrictions.includes(archetype));
-
-  const commands = all
-    ? folderEntries
-    : folderEntries.filter(e => matches(resourceMap.commands?.[e.name]));
-  const offArchetype = folderEntries.filter(e => !commands.includes(e)).map(e => e.name);
-
-  const created = [];
-  const updated = [];
-  const skipped = [];
-  const missing = [];
-  const copy = (src, dest, relPath) => overwrite
-    ? copyOverwrite(src, dest, relPath, created, updated)
-    : copyIfNotExists(src, dest, relPath, created, skipped);
-
-  const skills = new Set();
-  const agents = new Set();
-  const rules = new Set(includeCodingStandards ? ['coding-standards'] : []);
-  for (const entry of commands) {
-    let data = null;
-    try {
-      ({ data } = parseFrontmatter(await fs.readFile(entry.file, 'utf-8')));
-    } catch { /* malformed frontmatter — install the command without deps */ }
-    for (const skill of data?.skills ?? []) skills.add(skill);
-    for (const skill of data?.['skills-optional'] ?? []) {
-      if (all || matches(resourceMap.skills?.[skill])) skills.add(skill);
-    }
-    for (const agent of data?.agents ?? []) agents.add(agent);
-    for (const rule of data?.rules ?? []) rules.add(rule);
-
-    await copy(
-      entry.file,
-      path.join(projectDir, '.cursor', 'commands', `${entry.name}.md`),
-      path.join('.cursor', 'commands', `${entry.name}.md`)
-    );
+  const entry = manifest?.files?.find(f => f.path === relPath);
+  const diskHash = await hashFile(dest);
+  if (entry && entry.sha256 === diskHash) {
+    await fs.copy(src, dest, { overwrite: true });
+    updated.push(relPath);
+    return;
   }
-
-  for (const skill of [...skills].sort()) {
-    const src = path.join(templateDir, 'skills', skill);
-    if (!await fs.pathExists(src)) { missing.push(`skills/${skill}`); continue; }
-    for (const file of await getAllFiles(src)) {
-      const rel = path.relative(src, file);
-      if (SKIP_PATTERNS.some(p => rel.includes(p))) continue;
-      await copy(
-        file,
-        path.join(projectDir, '.cursor', 'skills', skill, rel),
-        path.join('.cursor', 'skills', skill, rel)
-      );
-    }
-  }
-  for (const agent of [...agents].sort()) {
-    const src = path.join(templateDir, 'agents', `${agent}.md`);
-    if (!await fs.pathExists(src)) { missing.push(`agents/${agent}.md`); continue; }
-    await copy(
-      src,
-      path.join(projectDir, '.cursor', 'agents', `${agent}.md`),
-      path.join('.cursor', 'agents', `${agent}.md`)
-    );
-  }
-  for (const rule of [...rules].sort()) {
-    const src = path.join(templateDir, 'rules', `${rule}.mdc`);
-    if (!await fs.pathExists(src)) { missing.push(`rules/${rule}.mdc`); continue; }
-    await copy(
-      src,
-      path.join(projectDir, '.cursor', 'rules', `${rule}.mdc`),
-      path.join('.cursor', 'rules', `${rule}.mdc`)
-    );
-  }
-
-  return { created, updated, skipped, offArchetype, missing };
+  await fs.writeFile(`${dest}.kit-update`, await fs.readFile(src));
+  mergeNeeded.push(relPath);
 }
 
 async function copyOverwrite(src, dest, relPath, created, updated) {
@@ -510,7 +417,7 @@ export async function uninstallResource(projectDir, type, name, templateDir, sel
   } else {
     const dir = KIT_MANAGED_DIRS.includes(type) ? type : KIT_MANAGED_DIRS.find(d => d === type + 's');
     if (!dir) {
-      return { error: `Unknown resource type "${type}". Valid types: skill, agent, command, hook` };
+      return { error: `Unknown resource type "${type}". Valid types: skill, agent, command, rule, hook` };
     }
     if (dir === 'commands') {
       relPath = path.join('.cursor', 'commands', `${name}.md`);
@@ -540,7 +447,7 @@ export async function uninstallResource(projectDir, type, name, templateDir, sel
       .filter(p => p !== relPath);
     await writeManifest(projectDir, selfManifestRelPath, {
       kitVersion: oldManifest.kitVersion,
-      archetype: oldManifest.archetype,
+      archetypes: oldManifest.archetypes ?? (oldManifest.archetype ? [oldManifest.archetype] : []),
       files: remainingFiles,
     });
   }

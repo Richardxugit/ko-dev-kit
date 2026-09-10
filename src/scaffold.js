@@ -2,13 +2,16 @@
 import path from 'path';
 import * as engine from './scaffold-core/index.js';
 
-export const COMMAND_FOLDERS = ['dev'];
-
 // Every dev-kit archetype (fe-nx, nestjs-graphql, design-system) is exactly
 // what used to be GENERIC_ARCHETYPES — so a resource unlisted here is
 // installed for all 3, matching the old "generic dev-workflow" behavior
 // without needing to enumerate it.
 export const ARCHETYPE_RESOURCES = {
+  rules: {
+    'fe-nx': ['fe-nx'],
+    'nestjs-graphql': ['nestjs-graphql'],
+    'design-system': ['design-system'],
+  },
   agents: {
     'frontend-developer': ['fe-nx'],
     'backend-developer': ['nestjs-graphql'],
@@ -22,8 +25,8 @@ export const ARCHETYPE_RESOURCES = {
     'ko-svc-lib': ['nestjs-graphql'],
     // Excluded from design-system too (overkill for component-focused workflow):
     'ko-feature': ['fe-nx', 'nestjs-graphql'],
+    'ko-spike': ['fe-nx', 'nestjs-graphql'],
     'ko-implement': ['fe-nx', 'nestjs-graphql'],
-    'ko-knowledge-gen': ['fe-nx', 'nestjs-graphql'],
   },
   skills: {
     'nx-monorepo': ['fe-nx'],
@@ -46,16 +49,17 @@ export const ARCHETYPE_RESOURCES = {
 
 export const MANIFEST_REL_PATH = path.join('.cursor', '.ko-dev-kit-manifest.json');
 
+// SDLC periphery — never auto-installed by init; `ko-dev-kit install command <name>`
+// adds them on demand. Keep the core loop lean.
+export const MANUAL_INSTALL_COMMANDS = ['ko-new-command', 'ko-knowledge-gen', 'ko-pr-desc', 'ko-release-verify'];
+
 export const getCommandEntries = (templateDir) => engine.getCommandEntries(templateDir);
 
 export const scaffoldProject = (projectDir, archetype, templateDir, options) =>
-  engine.scaffoldProject(projectDir, archetype, templateDir, ARCHETYPE_RESOURCES, options);
+  engine.scaffoldProject(projectDir, archetype, templateDir, ARCHETYPE_RESOURCES, { ...options, manualInstall: MANUAL_INSTALL_COMMANDS });
 
 export const pruneProject = (projectDir, archetype, templateDir) =>
   engine.pruneProject(projectDir, archetype, templateDir, ARCHETYPE_RESOURCES);
-
-export const installFolder = (projectDir, folderName, templateDir, options) =>
-  engine.installFolder(projectDir, folderName, templateDir, ARCHETYPE_RESOURCES, options);
 
 export const { installResource, listAvailableResources, getMcpSuggestions } = engine;
 
