@@ -2,7 +2,6 @@
 name: ko-bugfix
 description: Start a structured bug fix with git archaeology, archetype-aware context, then hand off to superpowers debugging
 agents: [code-reviewer]
-skills-optional: [unit-of-work]
 ---
 
 # Bug Fix Workflow
@@ -95,7 +94,7 @@ This is informational — it helps understand context, not assign blame.
 
 ## Step 5: Write the bugfix spec
 
-**Unit-of-work check first** (if the `unit-of-work` skill is installed): glob `.cursor/specs/*/stories.md` — if a unit's story covers this bug, claim it per the skill's protocol (story → `in-progress`, bolt-log row `construction: bugfix` / `/ko-bugfix`) and put the spec inside that unit's directory instead.
+**Unit-of-work check first** (only if the `unit-of-work` skill is installed — shipped by ko-product-kit, not this kit): glob `.cursor/specs/*/stories.md` — if a unit's story covers this bug, claim it per the skill's protocol (story → `in-progress`, bolt-log row `construction: bugfix` / `/ko-bugfix`) and put the spec inside that unit's directory instead.
 
 Create a spec at `.cursor/specs/fix-<slug>/spec.md` (its own directory, matching the kit's per-slug spec convention):
 
@@ -158,6 +157,6 @@ Create a spec at `.cursor/specs/fix-<slug>/spec.md` (its own directory, matching
   ## Status: DONE
   ```
 
-If a unit-of-work story was claimed in Step 5, mark it `done` and append the outcome bolt-log row.
+If a unit-of-work story was claimed in Step 5 (ko-product-kit repos), mark it `done` and append the outcome bolt-log row.
 
 Report: the root cause (one sentence), who introduced it and why, the fix, and the test that proves it. Finish with the report.

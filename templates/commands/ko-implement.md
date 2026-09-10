@@ -1,7 +1,6 @@
 ---
 name: ko-implement
 description: Continue implementing an existing plan/spec from a previous session
-skills-optional: [unit-of-work]
 ---
 
 # Implement: Continue an Existing Plan
@@ -10,7 +9,7 @@ Pick up where a previous session left off by finding and executing an unfinished
 
 ## Steps
 
-1. **Scan for plans/specs** in `.cursor/specs/`. List all `.md` files that contain unchecked items (`- [ ]`) or a non-`DONE` status. Also glob `.cursor/specs/*/stories.md` (see the `unit-of-work` skill, if installed) and list units with `in-progress` or `todo` stories — an `in-progress` story is the strongest signal of where the previous session stopped.
+1. **Scan for plans/specs** in `.cursor/specs/`. List all `.md` files that contain unchecked items (`- [ ]`) or a non-`DONE` status. Also glob `.cursor/specs/*/stories.md` (only when the `unit-of-work` skill is installed — shipped by ko-product-kit) and list units with `in-progress` or `todo` stories — an `in-progress` story is the strongest signal of where the previous session stopped.
 
 2. **If none found**, tell the user: "No unfinished plans found. Run /ko-feature to start a new one."
 
@@ -54,7 +53,7 @@ Pick up where a previous session left off by finding and executing an unfinished
 
 ## After All Tasks Complete
 
-When all tasks in the plan are done, do not stop. Tell the user: "All tasks complete. Running `/ko-verify` to check quality gates." Then invoke `/ko-verify` to run build, lint, and tests, then `/ko-review` on the complete diff. Update the spec status to `DONE`. If the plan belongs to a unit of work, mark the completed story `done` in `stories.md` and append a bolt-log row per the `unit-of-work` protocol.
+When all tasks in the plan are done, do not stop. Tell the user: "All tasks complete. Running `/ko-verify` to check quality gates." Then invoke `/ko-verify` to run build, lint, and tests, then `/ko-review` on the complete diff. Update the spec status to `DONE`. If the plan belongs to a unit of work, mark the completed story `done` in `stories.md` and append a bolt-log row per the `unit-of-work` protocol (ko-product-kit repos).
 
 The user should not have to manually invoke `/ko-verify` — it is the automatic final step of implementation.
 

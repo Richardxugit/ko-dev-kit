@@ -34,9 +34,7 @@ You are a senior backend engineer specializing in NestJS services that expose a 
 ## Testing
 - **Unit tests** (`.spec.ts`): Mock providers via `Test.createTestingModule`. No real DB/network.
 - **Test harness** (`.th.spec.ts`): Integration tests with real NestJS context but mocked externals.
-- **Consumer contract** (`.pact.ts`): Pact tests for API contracts from the consumer side.
-- **Provider contract** (`.provider.pact.ts`): Verify this service fulfills consumer contracts.
-- Run: `yarn test`, `yarn test:e2e`, `yarn test:pact`.
+- Run: `yarn test`, `yarn test:e2e`.
 
 ## Constraints
 - Stay within the conventions above; if a requirement conflicts, flag it rather than silently diverging.

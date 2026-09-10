@@ -82,7 +82,7 @@ pnpm nx graph
 - **Imports:** use TS path aliases from `tsconfig.base.json` (e.g. `@org/Button`), never deep relative paths. Each package exports through `src/index.ts`.
 - **Styling:** `Component.styled.ts` with named exports. Import as `import * as S from './Component.styled'`. Use theme values, never hardcoded.
 - **Server/Client:** Pages Router is primary (getServerSideProps + getInitialProps). App Router is used only in product-discovery-ui for `/search` and `/shop`.
-- **Testing:** New tests → Vitest (`*.vitest.tsx`). Legacy → Jest (`*.test.tsx`). Pact for API contracts (`*.pact.ts`).
+- **Testing:** New tests → Vitest (`*.vitest.tsx`). Legacy → Jest (`*.test.tsx`).
 - **Accessibility:** WCAG 2.2 AA — see the `wcag-2.2-aa` skill.
 - **Commits:** `type [KO-XXXX]: short description` (e.g. `feat [KO-1234]: add wishlist page`, header ≤ 72 chars; ticket is a commitlint warning, not an error). Enforced by Husky + commitlint. `npx cz` for interactive commits.
 - **Secrets:** Never commit decrypted `.env.secret`. Use `scripts/crypt.js` for local env management.

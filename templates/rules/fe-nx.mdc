@@ -59,7 +59,6 @@ Two path alias patterns in `tsconfig.base.json`:
 
 ## Testing
 - New tests use Vitest with `*.vitest.tsx` naming. Existing `*.test.tsx` files use Jest (legacy).
-- Pact contract tests use `*.pact.ts` naming — they verify the contract between this frontend and backend APIs.
 - Co-locate tests next to the component/module they cover (e.g. `<Name>.vitest.tsx` beside `<Name>.tsx`).
 - Use `@ko-ui-lib/test-utils` `render` for component tests — it wraps with Theme + MaterialTheme + AddToCartNotificationProvider. Use `@testing-library/react` directly when you need Apollo or complex provider setups.
 - Test user behavior, not implementation. Query by role/label (`getByRole`, `getByLabelText`), not by test id. Use `userEvent` (not `fireEvent`).

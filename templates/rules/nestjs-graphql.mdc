@@ -101,8 +101,6 @@ alwaysApply: false
 - **Jest 30** with SWC transform (`@swc/jest`). Run tests with the repo's package manager (yarn in this family — the lockfile is the source of truth).
 - **Unit tests** (`.spec.ts`): Mock providers via `Test.createTestingModule`. No real DB/network.
 - **Test harness** (`.th.spec.ts`): Integration tests with a real NestJS app context but mocked external services.
-- **Consumer contract** (`.pact.ts`): Pact 13 tests verifying API contracts from the consumer perspective.
-- **Provider contract** (`.provider.pact.ts`): Pact verification that this service fulfills the contract.
 - Name tests as business rules: `'should return discounted price when customer has loyalty points'`
 - Test behaviour/outcomes, not implementation details. Mock only out-of-process boundaries.
 

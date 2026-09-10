@@ -2,7 +2,6 @@
 name: ko-spike
 description: Timeboxed throwaway experiment to answer a technical question — output is a findings doc and a go/no-go decision, not mergeable code
 args: "<question or hypothesis> [--timebox 4h|1d]"
-skills-optional: [unit-of-work]
 ---
 
 # Spike
@@ -21,7 +20,7 @@ and a go/no-go decision — the code is a means, and it is throwaway.
    ate a week.
 
 3. **Claim the story** — if a `type: spike` story exists in `.cursor/specs/*/stories.md`,
-   claim it per the `unit-of-work` protocol (status → `in-progress`, bolt-log row).
+   claim it per the `unit-of-work` protocol (status → `in-progress`, bolt-log row) — only when that skill is installed (ko-product-kit).
 
 4. **Explore** — build the cheapest thing that produces evidence. Spikes are explicitly
    exempt from: TDD, `/ko-verify`, `/ko-review`, and coding-standards polish. Code lives
