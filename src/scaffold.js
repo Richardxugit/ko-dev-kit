@@ -2,8 +2,6 @@
 import path from 'path';
 import * as engine from './scaffold-core/index.js';
 
-export const COMMAND_FOLDERS = ['dev'];
-
 // Every dev-kit archetype (fe-nx, nestjs-graphql, design-system) is exactly
 // what used to be GENERIC_ARCHETYPES — so a resource unlisted here is
 // installed for all 3, matching the old "generic dev-workflow" behavior
@@ -53,9 +51,6 @@ export const scaffoldProject = (projectDir, archetype, templateDir, options) =>
 
 export const pruneProject = (projectDir, archetype, templateDir) =>
   engine.pruneProject(projectDir, archetype, templateDir, ARCHETYPE_RESOURCES);
-
-export const installFolder = (projectDir, folderName, templateDir, options) =>
-  engine.installFolder(projectDir, folderName, templateDir, ARCHETYPE_RESOURCES, options);
 
 export const { installResource, listAvailableResources, getMcpSuggestions } = engine;
 

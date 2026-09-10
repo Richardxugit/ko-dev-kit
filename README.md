@@ -39,7 +39,6 @@ ko-dev-kit init                              # detect archetype, scaffold .curso
 ko-dev-kit init --archetype nestjs-graphql    # non-interactive (CI/scripts)
 ko-dev-kit prune                              # remove resources that don't match the archetype
 ko-dev-kit install <type> <name> [-g]         # install one resource (skill|agent|command|hook)
-ko-dev-kit install folder dev [--all] [-g]    # install every dev/ command + its dependency union
 ko-dev-kit uninstall <type> <name> [-g]       # remove one installed resource (kept if another kit still needs it)
 ko-dev-kit list                               # list available resources
 ko-dev-kit export <command-name> [-o dir] [--plugin]   # export a command + dependencies as a portable bundle
@@ -107,8 +106,7 @@ commands without them fall back to a body scan.
 ### Mint a custom plugin
 
 ```bash
-# Interactive — asks for a plugin name, then a flat, space-select list of every dev/ command
-# (ko-dev-kit has a single command folder, so there's no folder-browsing step)
+# Interactive — asks for a plugin name, then a flat, space-select list of every command
 ko-dev-kit export-plugin
 
 # Non-interactive
@@ -253,7 +251,7 @@ ko-dev-kit/
 ├── templates/
 │   ├── agents/           # Subagent definitions (5 agents)
 │   ├── agents-md/        # AGENTS.md templates per archetype (3 files)
-│   ├── commands/dev/     # Slash command definitions (18 commands)
+│   ├── commands/         # Slash command definitions (18 commands)
 │   ├── hooks/            # Privacy hook script + config
 │   ├── rules/            # .mdc rule files (4 rules)
 │   ├── settings/         # CLI permissions + MCP config

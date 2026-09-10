@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { ARCHETYPES } from '../src/detect.js';
 import { ARCHETYPE_LABELS } from '../src/init.js';
-import { ARCHETYPE_RESOURCES, getCommandEntries, COMMAND_FOLDERS } from '../src/scaffold.js';
+import { ARCHETYPE_RESOURCES, getCommandEntries } from '../src/scaffold.js';
 import { parseFrontmatter } from '../src/scaffold-core/index.js';
 
 const templateDir = path.resolve('templates');
@@ -43,12 +43,8 @@ describe('archetype consistency', () => {
     }
   });
 
-  it('command templates live in known folders with unique names', () => {
-    const entries = getCommandEntries(templateDir);
-    for (const entry of entries) {
-      expect(COMMAND_FOLDERS).toContain(entry.folder);
-    }
-    const names = entries.map(e => e.name);
+  it('command templates have unique names', () => {
+    const names = getCommandEntries(templateDir).map(e => e.name);
     expect(new Set(names).size).toBe(names.length);
   });
 
@@ -61,7 +57,7 @@ describe('archetype consistency', () => {
 });
 
 describe('command frontmatter', () => {
-  const commandEntries = getCommandEntries(templateDir).map(e => ({ ...e, label: `${e.folder}/${e.name}.md` }));
+  const commandEntries = getCommandEntries(templateDir).map(e => ({ ...e, label: `commands/${e.name}.md` }));
 
   it.each(commandEntries)('$label has valid frontmatter', ({ file, name }) => {
     const content = fs.readFileSync(file, 'utf-8');
@@ -110,16 +106,16 @@ describe('kit-wide staleness lint (dev-kit slice)', () => {
     { name: 'ko-release without -verify (renamed)', re: /ko-release(?!-verify)/ },
   ];
   const REQUIRED = [
-    { file: 'commands/dev/ko-release-verify.md', token: 'Preflight' },
-    { file: 'commands/dev/ko-release-verify.md', token: 'read-only' },
-    { file: 'commands/dev/ko-pr-desc.md', token: 'Preflight' },
-    { file: 'commands/dev/ko-feature.md', token: 'Atlassian MCP' },
-    { file: 'commands/dev/ko-bugfix.md', token: 'Atlassian MCP' },
-    { file: 'commands/dev/ko-ds-component.md', token: 'Atlassian MCP' },
-    { file: 'commands/dev/ko-svc-lambda.md', token: '[REUSE]' },
-    { file: 'commands/dev/ko-svc-nest-app.md', token: '[ADAPT]' },
-    { file: 'commands/dev/ko-svc-lib.md', token: '[REUSE]' },
-    { file: 'commands/dev/ko-test.md', token: '[REUSE' },
+    { file: 'commands/ko-release-verify.md', token: 'Preflight' },
+    { file: 'commands/ko-release-verify.md', token: 'read-only' },
+    { file: 'commands/ko-pr-desc.md', token: 'Preflight' },
+    { file: 'commands/ko-feature.md', token: 'Atlassian MCP' },
+    { file: 'commands/ko-bugfix.md', token: 'Atlassian MCP' },
+    { file: 'commands/ko-ds-component.md', token: 'Atlassian MCP' },
+    { file: 'commands/ko-svc-lambda.md', token: '[REUSE]' },
+    { file: 'commands/ko-svc-nest-app.md', token: '[ADAPT]' },
+    { file: 'commands/ko-svc-lib.md', token: '[REUSE]' },
+    { file: 'commands/ko-test.md', token: '[REUSE' },
     { file: 'agents/frontend-developer.md', token: 'real command output' },
     { file: 'agents/backend-developer.md', token: 'real command output' },
     { file: 'agents/design-system-engineer.md', token: 'real command output' },
@@ -129,7 +125,7 @@ describe('kit-wide staleness lint (dev-kit slice)', () => {
     { file: 'agents/code-reviewer.md', token: 'diff hunk' },
     { file: 'agents/review-specialist.md', token: 'diff hunk' },
     { file: 'agents/review-specialist.md', token: 'do not rewrite' },
-    { file: 'commands/dev/ko-review-team.md', token: 'regression' },
+    { file: 'commands/ko-review-team.md', token: 'regression' },
   ];
 
   it.each(REQUIRED)('$file carries its pattern token "$token"', ({ file, token }) => {

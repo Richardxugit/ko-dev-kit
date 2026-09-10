@@ -11,29 +11,13 @@ const KIT_MANAGED_DIRS = ['agents', 'commands', 'skills'];
 export function getCommandEntries(templateDir) {
   const commandsDir = path.join(templateDir, 'commands');
   if (!fs.pathExistsSync(commandsDir)) return [];
-  const entries = [];
-  const dirents = fs.readdirSync(commandsDir, { withFileTypes: true })
-    .sort((a, b) => a.name.localeCompare(b.name));
-  for (const dirent of dirents) {
-    if (dirent.isDirectory()) {
-      const files = fs.readdirSync(path.join(commandsDir, dirent.name)).sort();
-      for (const f of files) {
-        if (!f.endsWith('.md')) continue;
-        entries.push({
-          name: f.replace(/\.md$/, ''),
-          folder: dirent.name,
-          file: path.join(commandsDir, dirent.name, f),
-        });
-      }
-    } else if (dirent.name.endsWith('.md')) {
-      entries.push({
-        name: dirent.name.replace(/\.md$/, ''),
-        folder: null,
-        file: path.join(commandsDir, dirent.name),
-      });
-    }
-  }
-  return entries;
+  return fs.readdirSync(commandsDir, { withFileTypes: true })
+    .filter(d => d.isFile() && d.name.endsWith('.md'))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(d => ({
+      name: d.name.replace(/\.md$/, ''),
+      file: path.join(commandsDir, d.name),
+    }));
 }
 
 const SKIP_PATTERNS = [
@@ -308,7 +292,6 @@ export async function installResource(projectDir, type, name, templateDir, optio
     return { error: `No templates found for type "${dir}"` };
   }
 
-  // Commands: foldered source, flat install.
   if (dir === 'commands') {
     const entry = getCommandEntries(templateDir).find(e => e.name === name);
     if (!entry) {
@@ -363,92 +346,6 @@ export async function installResource(projectDir, type, name, templateDir, optio
   }
 
   return { created, updated, skipped };
-}
-
-export async function installFolder(projectDir, folderName, templateDir, resourceMap, options = {}) {
-  const { overwrite = true, all = false, archetype = null, includeCodingStandards = true } = options;
-
-  const folderEntries = getCommandEntries(templateDir)
-    .filter(e => e.folder === folderName)
-    .filter(e => !SKIP_PATTERNS.some(p => `${e.name}.md`.includes(p)));
-  if (folderEntries.length === 0) {
-    const folders = [...new Set(getCommandEntries(templateDir).map(e => e.folder).filter(Boolean))];
-    return { error: `Unknown or empty command folder "${folderName}". Available: ${folders.join(', ')}` };
-  }
-
-  const matches = (restrictions) =>
-    !restrictions
-    || restrictions.includes(folderName)
-    || (archetype != null && restrictions.includes(archetype));
-
-  const commands = all
-    ? folderEntries
-    : folderEntries.filter(e => matches(resourceMap.commands?.[e.name]));
-  const offArchetype = folderEntries.filter(e => !commands.includes(e)).map(e => e.name);
-
-  const created = [];
-  const updated = [];
-  const skipped = [];
-  const missing = [];
-  const copy = (src, dest, relPath) => overwrite
-    ? copyOverwrite(src, dest, relPath, created, updated)
-    : copyIfNotExists(src, dest, relPath, created, skipped);
-
-  const skills = new Set();
-  const agents = new Set();
-  const rules = new Set(includeCodingStandards ? ['coding-standards'] : []);
-  for (const entry of commands) {
-    let data = null;
-    try {
-      ({ data } = parseFrontmatter(await fs.readFile(entry.file, 'utf-8')));
-    } catch { /* malformed frontmatter — install the command without deps */ }
-    for (const skill of data?.skills ?? []) skills.add(skill);
-    for (const skill of data?.['skills-optional'] ?? []) {
-      if (all || matches(resourceMap.skills?.[skill])) skills.add(skill);
-    }
-    for (const agent of data?.agents ?? []) agents.add(agent);
-    for (const rule of data?.rules ?? []) rules.add(rule);
-
-    await copy(
-      entry.file,
-      path.join(projectDir, '.cursor', 'commands', `${entry.name}.md`),
-      path.join('.cursor', 'commands', `${entry.name}.md`)
-    );
-  }
-
-  for (const skill of [...skills].sort()) {
-    const src = path.join(templateDir, 'skills', skill);
-    if (!await fs.pathExists(src)) { missing.push(`skills/${skill}`); continue; }
-    for (const file of await getAllFiles(src)) {
-      const rel = path.relative(src, file);
-      if (SKIP_PATTERNS.some(p => rel.includes(p))) continue;
-      await copy(
-        file,
-        path.join(projectDir, '.cursor', 'skills', skill, rel),
-        path.join('.cursor', 'skills', skill, rel)
-      );
-    }
-  }
-  for (const agent of [...agents].sort()) {
-    const src = path.join(templateDir, 'agents', `${agent}.md`);
-    if (!await fs.pathExists(src)) { missing.push(`agents/${agent}.md`); continue; }
-    await copy(
-      src,
-      path.join(projectDir, '.cursor', 'agents', `${agent}.md`),
-      path.join('.cursor', 'agents', `${agent}.md`)
-    );
-  }
-  for (const rule of [...rules].sort()) {
-    const src = path.join(templateDir, 'rules', `${rule}.mdc`);
-    if (!await fs.pathExists(src)) { missing.push(`rules/${rule}.mdc`); continue; }
-    await copy(
-      src,
-      path.join(projectDir, '.cursor', 'rules', `${rule}.mdc`),
-      path.join('.cursor', 'rules', `${rule}.mdc`)
-    );
-  }
-
-  return { created, updated, skipped, offArchetype, missing };
 }
 
 async function copyOverwrite(src, dest, relPath, created, updated) {
