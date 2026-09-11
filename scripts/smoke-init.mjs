@@ -64,7 +64,10 @@ const FIXTURES = [
 ];
 
 // Manual-tier commands must never be auto-installed, in any fixture.
-const MANUAL = ['ko-new-command', 'ko-knowledge-gen', 'ko-pr-desc', 'ko-release-verify'];
+const MANUAL = ['ko-new-command', 'ko-knowledge-gen', 'ko-release-verify'];
+
+// Auto-installed for every archetype, in every fixture.
+const ALWAYS = ['.cursor/commands/ko-pr-desc.md'];
 
 let failures = 0;
 for (const fixture of FIXTURES) {
@@ -77,7 +80,7 @@ for (const fixture of FIXTURES) {
       else await fs.writeJson(abs, content);
     }
     execFileSync('node', [cli, 'init', '--archetype', fixture.name], { cwd: dir, stdio: 'pipe' });
-    for (const rel of [...fixture.expect, ...fixture.reject.map(r => `!${r}`), ...MANUAL.map(m => `!.cursor/commands/${m}.md`)]) {
+    for (const rel of [...fixture.expect, ...ALWAYS, ...fixture.reject.map(r => `!${r}`), ...MANUAL.map(m => `!.cursor/commands/${m}.md`)]) {
       const negated = rel.startsWith('!');
       const target = negated ? rel.slice(1) : rel;
       const exists = await fs.pathExists(path.join(dir, target));

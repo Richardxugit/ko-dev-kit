@@ -198,6 +198,7 @@ bug pass on top — `/ko-review` reads its comments and dedupes against them.
 | `/ko-review [--team]` | Review a change set — single pass by default; `--team` dispatches specialist reviewers (compliance, regression, simplicity, frontend, backend, tests) with a consolidated verdict |
 | `/ko-fix-review` | Address review feedback — syncs kit findings + human + BugBot comments into one file, fixes each with regression tests. Run in a fresh session |
 | `/ko-verify` | Run build/lint/tests and confirm they pass |
+| `/ko-pr-desc` | Generate PR title and description from diff + branch name |
 
 ### Shared commands (`fe-nx` / `nestjs-graphql` only)
 | Command | Purpose |
@@ -209,7 +210,6 @@ bug pass on top — `/ko-review` reads its comments and dedupes against them.
 ### Manual-install only (SDLC periphery — install when needed)
 | Command | Purpose | Install |
 |---------|---------|---------|
-| `/ko-pr-desc` | Generate PR title and description from diff + branch name | `ko-dev-kit install command ko-pr-desc` |
 | `/ko-release-verify` | Jira tickets → PRs → Buildkite deploy state → release runbook (never deploys) | `ko-dev-kit install command ko-release-verify` |
 | `/ko-knowledge-gen` | Generate knowledge base — full repo or focused topic | `ko-dev-kit install command ko-knowledge-gen` |
 | `/ko-new-command` | Create a new custom `/ko-*` command from plain-English description | `ko-dev-kit install command ko-new-command` |

@@ -112,9 +112,10 @@ Installed by ko-dev-kit. Core loop:
 | `/ko-fix-review <PR>` | Fix review findings (kit + human + BugBot comments) in a fresh session |
 | `/ko-verify` | Build/lint/type/tests + QA report |
 | `/ko-onboard` | Fill in AGENTS.md with real repo values |
+| `/ko-pr-desc` | Generate PR title and description from diff + branch name |
 
 On-demand (install when needed: `ko-dev-kit install command <name>`):
-`ko-pr-desc`, `ko-release-verify`, `ko-knowledge-gen`, `ko-new-command`.
+`ko-release-verify`, `ko-knowledge-gen`, `ko-new-command`.
 
 Archetype-specific:
 
