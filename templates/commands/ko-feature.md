@@ -119,7 +119,7 @@ Tell the user:
 
 Invoke the `superpowers:brainstorming` skill with the project context loaded. The brainstorming process will guide the user through requirements, design, and spec creation. The design spec is saved to `.cursor/specs/`.
 
-**Spec style is enforced** (coding-standards → "Specs and docs"): plain English, no filler; structure over prose — tables for options, Mermaid diagrams for flows/sequences/state; the spec answers what-problem / what-decision / how-to-verify fast, everything else is appendix or cut.
+**Spec style is enforced** (coding-standards → "Specs and docs"): plain English, no filler; structure over prose — tables for options, Mermaid diagrams for flows/sequences/state; the spec answers what-problem / what-decision / how-to-verify fast, everything else is appendix or cut. The spec carries acceptance criteria (observable behaviors) **only** — no test-scenario enumeration, no test code; those live in the plan (Step 2b-2) and in TDD execution. If brainstorming produces a spec that needs scrolling, compress it before asking for approval — the spec is re-fed as context in every later step, so its size is a direct cost multiplier.
 
 *Fallback (no superpowers):* restate the goal in one sentence, ask scoping questions (don't over-ask), and write the spec yourself to `.cursor/specs/`.
 
