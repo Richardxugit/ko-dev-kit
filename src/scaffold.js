@@ -51,7 +51,7 @@ export const MANIFEST_REL_PATH = path.join('.cursor', '.ko-dev-kit-manifest.json
 
 // SDLC periphery — never auto-installed by init; `ko-dev-kit install command <name>`
 // adds them on demand. Keep the core loop lean.
-export const MANUAL_INSTALL_COMMANDS = ['ko-new-command', 'ko-knowledge-gen', 'ko-pr-desc', 'ko-release-verify'];
+export const MANUAL_INSTALL_COMMANDS = ['ko-new-command', 'ko-knowledge-gen', 'ko-release-verify'];
 
 export const getCommandEntries = (templateDir) => engine.getCommandEntries(templateDir);
 
