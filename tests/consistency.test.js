@@ -113,10 +113,13 @@ describe('anti-overengineering rules', () => {
     expect(content).toContain('model: fast');
   });
 
-  it('coding-standards.mdc carries the spec style section', () => {
-    const content = fs.readFileSync(path.join(templateDir, 'rules', 'coding-standards.mdc'), 'utf-8');
-    expect(content).toContain('## Specs and docs (style)');
-    expect(content).toContain('Mermaid');
+  it('spec style rules live in ko-feature.md (canonical home, not alwaysApply)', () => {
+    const standards = fs.readFileSync(path.join(templateDir, 'rules', 'coding-standards.mdc'), 'utf-8');
+    expect(standards).not.toContain('## Specs and docs'); // moved out of the every-turn rule
+    const feature = fs.readFileSync(path.join(templateDir, 'commands', 'ko-feature.md'), 'utf-8');
+    expect(feature).toContain('Spec style is enforced');
+    expect(feature).toContain('Mermaid');
+    expect(feature).toContain('acceptance criteria'); // spec boundary (ACs only, no test enumeration)
   });
 
   it('ko-fix-review exists and is referenced as the review follow-up', () => {

@@ -84,6 +84,19 @@ Two path alias patterns in `tsconfig.base.json`:
 - Buildkite is the CI platform. Pipeline config lives in `.buildkite/`.
 - Lighthouse CI runs performance budgets on product-discovery-ui.
 
+## Monorepo shared library changes
+
+When modifying a shared library or package (anything consumed by multiple apps), check which apps depend on it and update their `force_update.txt` to trigger a pipeline rebuild:
+
+```bash
+date > apps/<app-name>/force_update.txt
+```
+
+- **Only force-update apps that have NO file changes in this commit.** If an app already has code changes alongside the lib change, its pipeline will trigger naturally — no `force_update.txt` needed.
+- Force-update is only for apps that consume the changed lib but have no modified files of their own in this commit.
+- Commit the `force_update.txt` changes together with the lib change in the same commit.
+- If unsure which apps are affected, search for imports of the changed package across `apps/`.
+
 ## Commit format
 - Only commit when in a git worktree. Otherwise leave changes for the user to commit.
 - Format: `type [TICKET]: short message` (ticket in square brackets, before the colon):
