@@ -67,7 +67,7 @@ const FIXTURES = [
 const MANUAL = ['ko-new-command', 'ko-knowledge-gen', 'ko-release-verify'];
 
 // Auto-installed for every archetype, in every fixture.
-const ALWAYS = ['.cursor/commands/ko-pr-desc.md'];
+const ALWAYS = ['.cursor/commands/ko-pr-desc.md', '.cursor/skills/workflow-refs/SKILL.md', '.cursor/skills/workflow-refs/references/verify-baseline.md'];
 
 let failures = 0;
 for (const fixture of FIXTURES) {

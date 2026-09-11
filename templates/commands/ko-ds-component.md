@@ -84,34 +84,11 @@ Get confirmation, then proceed to Step 4.
 
 ## Discovery Profile (`--discovery`)
 
-### Step 3: Brainstorm & Challenge
+### Step 3: Brainstorm & Challenge + Step 3b: Spec
 
-Invoke `superpowers:brainstorming` (or inline fallback). The agent actively probes and improves the design:
-
-1. **Reuse check** — is this already partially covered? Can it extend/compose an existing primitive?
-2. **Challenge the API** — is this flexible enough for ALL potential consumers? What if another app uses it differently?
-3. **Reusable vs app-specific** — if extracted from product code, strip business logic. The DS component is the generic shell.
-4. **Variant coverage** — states the design doesn't show but consumers will need? (empty, truncated, responsive, RTL?)
-5. **Composition** — compound (`Card.Header`, `Card.Body`)? Slots/render props? Headless hook + styled wrapper (`useXxx` + `<Xxx />`)?
-6. **Edge cases** — long text, many items, zero items, animation preferences, screen reader announcements?
-7. **Performance** — lazy loading needed? Memo justified? Heavy rendering?
-8. **Naming** — does the name reveal intent? Follow compound naming (`RadioGroup`, not `RadioList`)?
-
-*Fallback (no superpowers):* ask these as a batched prompt.
-
-### Step 3b: Write Spec
-
-Save to `.cursor/specs/YYYY-MM-DD-<component-name>-design.md`:
-- Component name, category, source reference
-- Prop API (typed interface) — what's the public contract
-- Variants, sizes, states
-- Composition pattern chosen
-- Multi-brand token requirements
-- Accessibility contract (roles, keyboard, focus)
-- Stories to cover
-- Migration notes (if replacing/versioning an existing component)
-
-Get user approval, then proceed to Step 4.
+Follow `.cursor/skills/workflow-refs/references/ds-component-discovery.md` — probe list (reuse,
+API flexibility, composition, edge cases, naming) and the spec contents to save under
+`.cursor/specs/`. Get user approval, then proceed to Step 4.
 
 ---
 
@@ -152,63 +129,8 @@ Every component MUST follow:
 
 ### Implementation files
 
-**`<component-name>.tsx`:**
-- Wrap in `<ThemeWrapper>`
-- `OmitKeys<MuiProps, ...>` to restrict MUI surface
-- `forwardRef<HTMLElement, Props>` typed explicitly
-- Extend element props for `aria-*`, `data-*`, `id`
-- ESLint limits: complexity ≤ 8, max-statements ≤ 10, max-depth ≤ 3
-- Radix UI available for complex headless interactions; `lucide-react` for icons
-
-**`<component-name>.test.tsx`:**
-- `@testing-library/react` + `userEvent`, query by role/label
-- `withEmotion()` wrapper, `cleanUpEmotionStyles()` in `afterEach`
-- Vitest globals (no imports for `describe`, `test`, `expect`, `vi`)
-- Test all variants, interactions, edge cases
-- Focus on behaviour and accessibility
-
-**`<component-name>.a11y.tsx`:**
-```tsx
-import { axe, toHaveNoViolations } from 'vitest-axe'
-import { render } from '@testing-library/react'
-import { withEmotion } from '@/utils/test-helper/emotion-query'
-import { ComponentName } from './component-name'
-
-expect.extend(toHaveNoViolations)
-
-describe('ComponentName a11y', () => {
-  test('default has no violations', async () => {
-    const { container } = render(withEmotion(<ComponentName />))
-    expect(await axe(container)).toHaveNoViolations()
-  })
-
-  test('disabled has no violations', async () => {
-    const { container } = render(withEmotion(<ComponentName disabled />))
-    expect(await axe(container)).toHaveNoViolations()
-  })
-})
-```
-
-**`<component-name>.stories.tsx`:**
-- CSF3: `satisfies Meta<typeof ComponentName>`, `StoryObj<typeof meta>`
-- `tags: ['autodocs']`
-- Cover: Default, each variant, each size, Loading, Error, Disabled, Empty
-- Both brands via global theme toolbar
-- `play()` interaction test for interactive components
-- Realistic data, copy-paste examples for recommended usage
-- Name error stories `ErrorState`
-
-**`<component-name>.mdx`:**
-- Intent, constraints, when NOT to use the component
-- Copy-paste examples (recommended usage, not edge cases)
-- Accessibility notes (keyboard, screen reader)
-- Theming example (both brands)
-
-**`index.ts`:**
-```ts
-export { ComponentName } from './component-name'
-export type { ComponentNameProps } from './component-name'
-```
+Per-file requirements (`.tsx` / `.test.tsx` / `.a11y.tsx` axe template / `.stories.tsx` / `.mdx` /
+`index.ts` barrel): `.cursor/skills/workflow-refs/references/ds-component-implementation.md`.
 
 ## Step 6: Brand Tokens (if needed)
 
@@ -253,10 +175,9 @@ The full chain runs automatically:
 [discovery: brainstorm → spec → approve → scaffold → TDD → verify]
 ```
 
-## Superpowers & Caveman
+## Superpowers
 
 When available:
 - **`superpowers:brainstorming`** — discovery profile (Step 3)
 - **`superpowers:test-driven-development`** — implementation (Step 5)
 - **`superpowers:verification-before-completion`** — quality gates (Step 8)
-- **`caveman`** — token-efficient responses when activated
