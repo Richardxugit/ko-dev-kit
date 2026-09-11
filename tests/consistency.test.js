@@ -13,6 +13,25 @@ function archetypesFor(dir, name) {
   return ARCHETYPE_RESOURCES[dir]?.[name] ?? ARCHETYPES;
 }
 
+describe('context budget', () => {
+  // Every char in an alwaysApply rule is paid on EVERY message of EVERY session.
+  // Community guidance (Cursor rules best practices): total alwaysApply ≤ ~2,000 tokens (~5,000 chars).
+  it('alwaysApply rules stay within the per-turn budget', () => {
+    const rulesDir = path.join(templateDir, 'rules');
+    let total = 0;
+    const alwaysOn = [];
+    for (const f of fs.readdirSync(rulesDir).filter(f => f.endsWith('.mdc'))) {
+      const content = fs.readFileSync(path.join(rulesDir, f), 'utf-8');
+      if (/^alwaysApply:\s*true/m.test(content)) {
+        total += content.length;
+        alwaysOn.push(f);
+      }
+    }
+    expect(alwaysOn, 'only coding-standards should be alwaysApply').toEqual(['coding-standards.mdc']);
+    expect(total, `alwaysApply total ${total} chars exceeds 5,000-char budget`).toBeLessThanOrEqual(5000);
+  });
+});
+
 describe('archetype consistency', () => {
   it('ARCHETYPE_LABELS keys match ARCHETYPES', () => {
     expect(new Set(Object.keys(ARCHETYPE_LABELS))).toEqual(new Set(ARCHETYPES));
