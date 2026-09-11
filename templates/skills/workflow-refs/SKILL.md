@@ -24,4 +24,5 @@ Reading files unprompted defeats the purpose — these exist to stay OUT of cont
 | `references/feature-conventions-checklist.md` | `/ko-feature` Step 2b (convention recon detail) |
 | `references/feature-dependency-versions.md` | `/ko-feature` plan writing (dependency API check) |
 | `references/review-team-mode.md` | `/ko-review --team` only |
-| `references/ds-component-standard.md` | `/ko-ds-component` standard profile only |
+| `references/ds-component-implementation.md` | `/ko-ds-component` Step 5 (per-file requirements) |
+| `references/ds-component-discovery.md` | `/ko-ds-component --discovery` only |
