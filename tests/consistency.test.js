@@ -30,6 +30,34 @@ describe('context budget', () => {
     expect(alwaysOn, 'only coding-standards should be alwaysApply').toEqual(['coding-standards.mdc']);
     expect(total, `alwaysApply total ${total} chars exceeds 5,000-char budget`).toBeLessThanOrEqual(5000);
   });
+
+  it('auto-installed command bodies stay within the per-invocation budget', () => {
+    // Commands are injected whole when invoked — keep cores lean, detail lives in workflow-refs.
+    const commandsDir = path.join(templateDir, 'commands');
+    for (const f of fs.readdirSync(commandsDir).filter(f => f.endsWith('.md'))) {
+      const name = f.replace(/\.md$/, '');
+      if (MANUAL_INSTALL_COMMANDS.includes(name)) continue; // manual-tier is opt-in, exempt
+      const size = fs.readFileSync(path.join(commandsDir, f), 'utf-8').length;
+      expect(size, `${name} core body ${size} chars exceeds 9,000-char budget — move detail into skills/workflow-refs/references/`).toBeLessThanOrEqual(9000);
+    }
+  });
+
+  it('every workflow-refs reference cited by a command exists', () => {
+    const refsDir = path.join(templateDir, 'skills', 'workflow-refs', 'references');
+    const cited = new Set();
+    for (const f of fs.readdirSync(path.join(templateDir, 'commands')).filter(f => f.endsWith('.md'))) {
+      const content = fs.readFileSync(path.join(templateDir, 'commands', f), 'utf-8');
+      for (const m of content.matchAll(/workflow-refs\/references\/([\w.-]+\.md)/g)) cited.add(m[1]);
+    }
+    expect(cited.size, 'no workflow-refs citations found — pattern broken?').toBeGreaterThan(0);
+    for (const ref of cited) {
+      expect(fs.pathExistsSync(path.join(refsDir, ref)), `command cites missing reference ${ref}`).toBe(true);
+    }
+    // no orphans: every reference file is cited by at least one command
+    for (const f of fs.readdirSync(refsDir).filter(f => f.endsWith('.md'))) {
+      expect(cited.has(f), `orphan reference ${f} — no command cites it`).toBe(true);
+    }
+  });
 });
 
 describe('archetype consistency', () => {
