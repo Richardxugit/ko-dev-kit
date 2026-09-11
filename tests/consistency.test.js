@@ -138,7 +138,7 @@ describe('anti-overengineering rules', () => {
     const feature = fs.readFileSync(path.join(templateDir, 'commands', 'ko-feature.md'), 'utf-8');
     expect(feature).toContain('Spec style is enforced');
     expect(feature).toContain('Mermaid');
-    expect(feature).toContain('acceptance criteria'); // spec boundary (ACs only, no test enumeration)
+    expect(feature).toContain('Acceptance criteria'); // spec boundary (ACs only, no test enumeration)
   });
 
   it('ko-fix-review exists and is referenced as the review follow-up', () => {
@@ -260,7 +260,7 @@ describe('kit-wide staleness lint (dev-kit slice)', () => {
     { file: 'commands/ko-release-verify.md', token: 'Preflight' },
     { file: 'commands/ko-release-verify.md', token: 'read-only' },
     { file: 'commands/ko-pr-desc.md', token: 'Preflight' },
-    { file: 'commands/ko-feature.md', token: 'Atlassian MCP' },
+    { file: 'skills/workflow-refs/references/feature-input-fetching.md', token: 'Atlassian MCP' },
     { file: 'commands/ko-bugfix.md', token: 'Atlassian MCP' },
     { file: 'commands/ko-ds-component.md', token: 'Atlassian MCP' },
     { file: 'commands/ko-svc-lambda.md', token: '[REUSE]' },
