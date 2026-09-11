@@ -97,6 +97,7 @@ When available, use these external skills to improve workflow quality. **If not 
 - Prefer structure over prose: tables for options and comparisons, bullet lists for requirements, **Mermaid diagrams** for flows, sequences, and state (```mermaid blocks render in Cursor and GitHub). One diagram replaces three paragraphs.
 - A spec answers three questions fast: what problem (3 lines max), what we decided, how we verify. Everything else is supporting detail — appendix or cut.
 - Every requirement must be testable: acceptance criteria are observable behaviors, not aspirations.
+- **Boundary:** the spec carries acceptance criteria only — no test-scenario enumeration, no test code. Test file tasks live in the plan; test code is written during TDD execution. Specs are read by humans and re-fed to the LLM as context every session — target one screen, not a document that needs scrolling.
 
 ## Simplicity (hard rules)
 
