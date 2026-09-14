@@ -169,6 +169,33 @@ describe('anti-overengineering rules', () => {
     expect(feature).toContain('Acceptance criteria'); // spec boundary (ACs only, no test enumeration)
   });
 
+  it('coding-standards carries convention-following hard rules', () => {
+    const standards = fs.readFileSync(path.join(templateDir, 'rules', 'coding-standards.mdc'), 'utf-8');
+    expect(standards).toContain('declaration style'); // const-arrow vs function — never mix
+    expect(standards).toContain('justify why the existing one'); // new pattern needs justification
+    expect(standards).toContain('what each change is FOR'); // no orphan changes
+  });
+
+  it('no template carries caveman references (user-activated mode, not harness routing)', async () => {
+    for (const file of await listFilesRecursive(templateDir)) {
+      const content = fs.readFileSync(path.join(templateDir, file), 'utf-8');
+      expect(/caveman/i.test(content), `${file} still references caveman`).toBe(false);
+    }
+  });
+
+  it('ko-feature keeps the lean session-shape rules', () => {
+    const feature = fs.readFileSync(path.join(templateDir, 'commands', 'ko-feature.md'), 'utf-8');
+    expect(feature).toContain('recon subagent'); // Step 2b recon delegated
+    expect(feature).toContain('Plan economy'); // plan size boundary
+    expect(feature).toContain('--fast`'); // small-scope suggestion
+  });
+
+  it('review-specialist a11y fallback points at the shared checklist (no inline restatement)', () => {
+    const agent = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
+    expect(agent).toContain('workflow-refs/references/verify-a11y-checklist.md');
+    expect(agent).not.toContain('prefers-reduced-motion'); // detail lives in the checklist
+  });
+
   it('ko-fix-review exists and is referenced as the review follow-up', () => {
     const cmd = fs.readFileSync(path.join(templateDir, 'commands', 'ko-fix-review.md'), 'utf-8');
     expect(cmd).toContain('[bugbot]');

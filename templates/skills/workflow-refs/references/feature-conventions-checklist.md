@@ -13,6 +13,11 @@ existing modules/components in the same area:
   GraphQL error formatting, React error boundaries)
 - **Data layer** — What data-fetching pattern is established? (e.g., generated Apollo hooks,
   services, resolvers)
+- **Declaration style** — `const` arrow functions vs `function` declarations, component definition
+  style. Match it exactly; never mix styles.
+- **Reusable implementations** — does the repo already have a helper/hook/service that does (part
+  of) what this feature needs? List them for reuse. A different approach requires justification —
+  why the existing one doesn't work.
 
 **How to check — locate, then read by range:** find the symbol or pattern with LSP
 (`documentSymbol`/`goToDefinition`) or Grep first, then read only the surrounding lines (~50
