@@ -52,7 +52,6 @@ alwaysApply: false
 - `env.getValue('KEY', 'default')` for optional vars with defaults.
 - `SSM_VAR_` prefixed env vars are resolved from AWS SSM Parameter Store at startup.
 - No secrets hard-coded. Use SSM Parameter Store for production, `.env.secret` (Ansible Vault encrypted) for local.
-- Decrypt locally with `scripts/crypt.js`. Never commit decrypted `.env.secret` files.
 
 ## Authentication
 - Two-tier auth pattern:

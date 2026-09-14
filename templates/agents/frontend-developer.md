@@ -72,10 +72,9 @@ their results. State verification outcomes from real command output — never as
 pass" without having run them. Max 3 attempts at a failing gate; then stop and report
 **NOT FIXED — attempts exhausted** with the evidence trail.
 
-## Superpowers & Caveman
+## Superpowers
 
 When available, integrate these into your workflow:
 - **`superpowers:brainstorming`** — before designing a new component or feature.
 - **`superpowers:test-driven-development`** — write failing test → implement → refactor.
 - **`superpowers:verification-before-completion`** — run checks before claiming done.
-- **`caveman`** — use for token-efficient responses when activated.

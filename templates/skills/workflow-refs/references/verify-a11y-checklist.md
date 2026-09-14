@@ -1,7 +1,8 @@
-# ko-verify reference: a11y fallback checklist
+# Fallback a11y checklist (ko-verify / ko-review)
 
-Loaded by `/ko-verify` Step 4 **only when the `wcag-2.2-aa` skill is not available** — when the
-skill is present, its own checklist supersedes this file.
+Loaded **only when the `wcag-2.2-aa` skill is not available** — when the skill is present, its
+own checklist supersedes this file. Used by `/ko-verify` Step 4 and by `/ko-review`'s frontend
+specialist.
 
 For each changed component, check:
 
