@@ -10,7 +10,7 @@ Archetype rules in `.cursor/rules/` extend this baseline.
 ## General
 
 - Match the surrounding code: naming, structure, formatting, and idioms already in the file.
-- Prefer clarity over cleverness. Smaller, focused units beat large multi-purpose ones.
+- Prefer clarity over cleverness; small focused units beat large multi-purpose ones.
 - Reuse before you write — an existing function, component, utility, or the standard library — before creating anything new. If you propose a different approach than the repo's established one, justify why the existing one doesn't work first.
 
 ## TypeScript / JavaScript
@@ -20,7 +20,7 @@ Archetype rules in `.cursor/rules/` extend this baseline.
 - `const` by default; `let` only when reassigned; never `var`.
 - Follow the repo's declaration style — `const` arrow functions vs `function` declarations; never mix the two.
 - Prefer pure functions and immutable data; avoid shared mutable state.
-- Use `async/await` over raw promise chains, and always handle rejections.
+- Use `async/await` over raw promise chains; always handle rejections.
 - No `console.log` in committed code — use the project's logger or remove it.
 
 ## Naming
@@ -28,6 +28,7 @@ Archetype rules in `.cursor/rules/` extend this baseline.
 - `camelCase` for variables/functions, `PascalCase` for types/classes/components, `UPPER_SNAKE` for constants.
 - Names describe intent, not type (`users`, not `userArray`).
 - Booleans read as predicates (`isLoading`, `hasError`, `canSubmit`).
+- File names: short and clear — what it IS, not all it does (`wishlist-card.tsx`, not `wishlist-card-with-retry.tsx`).
 
 ## Errors
 
@@ -42,7 +43,7 @@ Archetype rules in `.cursor/rules/` extend this baseline.
 
 ## Security
 
-- Never commit secrets — no keys, tokens, or passwords anywhere, including tests. Read config from environment / a config service (SSM Parameter Store).
+- Never commit secrets — no keys, tokens, or passwords anywhere, including tests. Read config from environment / config service (SSM).
 - Validate and sanitize external input at the boundary.
 - Don't read or log credential files (`.env`, `*.pem`, `*.key`, credentials, tokens).
 - Never commit decrypted `.env.secret`; use the repo's encryption script (`scripts/crypt.js` / Ansible Vault).
@@ -59,7 +60,7 @@ Archetype rules in `.cursor/rules/` extend this baseline.
 
 ## Superpowers integration
 
-When the superpowers skills are installed, the `/ko-*` commands invoke them for the matching phase (brainstorming, planning, TDD, debugging, review). **If not installed, the kit works fully standalone** — use Cursor's built-in plan mode and the `/ko-*` commands directly.
+If the superpowers skills are installed, `/ko-*` commands invoke them per phase (brainstorming, planning, TDD, review); if not, the kit works standalone with Cursor's plan mode.
 
 **Spec/plan file location override:** save all specs and plans to `.cursor/specs/` (`YYYY-MM-DD-<topic>-design.md` / `-plan.md`) — NOT the superpowers default `docs/superpowers/` paths. This is a user preference that overrides the superpowers default.
 

@@ -174,6 +174,7 @@ describe('anti-overengineering rules', () => {
     expect(standards).toContain('declaration style'); // const-arrow vs function — never mix
     expect(standards).toContain('justify why the existing one'); // new pattern needs justification
     expect(standards).toContain('what each change is FOR'); // no orphan changes
+    expect(standards).toContain('File names: short and clear'); // naming budget for files
   });
 
   it('no template carries caveman references (user-activated mode, not harness routing)', async () => {
@@ -329,8 +330,13 @@ describe('kit-wide staleness lint (dev-kit slice)', () => {
     { file: 'agents/backend-developer.md', token: 'NOT FIXED' },
     { file: 'agents/design-system-engineer.md', token: 'NOT FIXED' },
     { file: 'agents/code-reviewer.md', token: 'diff hunk' },
+    { file: 'agents/code-reviewer.md', token: 'business logic' },
+    { file: 'agents/code-reviewer.md', token: 'Mock discipline' },
+    { file: 'agents/code-reviewer.md', token: 'Regression' },
     { file: 'agents/review-specialist.md', token: 'diff hunk' },
     { file: 'agents/review-specialist.md', token: 'do not rewrite' },
+    { file: 'agents/review-specialist.md', token: 'Mock discipline' },
+    { file: 'agents/review-specialist.md', token: 'Convention fidelity' },
     { file: 'commands/ko-review.md', token: 'regression' },
     { file: 'commands/ko-review.md', token: 'simplicity' },
     { file: 'commands/ko-review.md', token: '--team' },
