@@ -11,7 +11,7 @@ Requires the **superpowers** skills for the methodology phases (brainstorming, p
 
 ## Profiles
 
-Two execution profiles. Default is **standard**; the user selects **fast** with `/ko-feature <description> --fast` (or a hard time budget). Fast trades depth for speed — never promise a duration.
+Two profiles: **standard** (default) and **fast** (`/ko-feature <description> --fast`). Fast trades depth for speed — never promise a duration.
 
 | Aspect | standard (default) | fast (`--fast`) |
 |--------|--------------------|-----------------|
@@ -24,7 +24,7 @@ Two execution profiles. Default is **standard**; the user selects **fast** with 
 | Verify | Full `/ko-verify` | `/ko-verify` scoped (type check + affected tests + summary) |
 
 **Fast-profile guardrails** — state these when fast is selected:
-- Only viable when the env runs clean and the knowledge base is current; a cold repo blows the budget regardless — fall back to standard.
+- Only viable when the env runs clean and the KB is current; a cold repo blows the budget — fall back to standard.
 - Not for features needing genuine design exploration — forcing those into fast pays the time back in rework.
 - The skipped adversarial review is the main risk trade-off; the self-review of integration points is the safeguard that stays.
 
@@ -34,9 +34,9 @@ You are starting a new feature. Follow these steps:
 
 Before loading context, ask the user for anchoring artifacts — **Figma/design links, API specs (SDL/OpenAPI), design docs (RFC/ADR), tickets (Jira/Linear with ACs)**.
 
-If they share links or files, fetch them before continuing so the material is in context for
-brainstorming — fetch procedure per `.cursor/skills/workflow-refs/references/feature-input-fetching.md`
-(never proceed on a guessed summary of an unfetched link).
+If they share links or files, fetch them before continuing per
+`.cursor/skills/workflow-refs/references/feature-input-fetching.md` — never proceed on a guessed
+summary of an unfetched link.
 
 Nothing to share → proceed; brainstorming surfaces requirements through dialogue.
 
@@ -46,7 +46,7 @@ Before any design work, check for leftovers from prior attempts at this feature:
 
 1. `git status --porcelain` — flag untracked files named like the feature (e.g. a stray `WishlistCard.test.tsx` from an abandoned run).
 2. Check `.cursor/specs/` for existing files matching the feature name.
-3. **Unit-of-work check** (only if the `unit-of-work` skill is installed — ko-product-kit, not this kit): glob `.cursor/specs/*/stories.md` for a unit matching the feature; if found, **claim it** per the skill's protocol and save the spec/plan into the unit's directory — brainstorming (Step 4) starts from the unit's stories/ACs, not a blank page.
+3. **Unit-of-work check** (only if the `unit-of-work` skill is installed — ko-product-kit): glob `.cursor/specs/*/stories.md` for a matching unit; if found, **claim it** per the skill's protocol, save spec/plan into its directory — brainstorming starts from its stories/ACs, not a blank page.
 
 If anything is found, list it and ask: resume, delete, or ignore. Never design on top of a dirty starting state.
 
@@ -60,13 +60,16 @@ Review: the archetype rule in `.cursor/rules/`, `AGENTS.md` for project conventi
 
 ## Step 2b: Check Codebase Conventions
 
-Before brainstorming the design, identify how the codebase handles each cross-cutting concern the
-feature touches — **user-facing text, styling, state management, error handling, data layer** —
-checking 2-3 existing modules per aspect per
-`.cursor/skills/workflow-refs/references/feature-conventions-checklist.md`. Never read a file over
-~400 lines whole during recon — locate with LSP/Grep, read only the surrounding ~50 lines.
+Dispatch ONE recon subagent to map how the codebase handles each cross-cutting concern the feature
+touches, per `.cursor/skills/workflow-refs/references/feature-conventions-checklist.md`, and return
+a ≤1-page conventions summary. Keep only the summary in context — the raw file reads stay in the
+subagent.
 
-Document the conventions you find. They MUST be carried into brainstorming — the design follows existing patterns, never introduces new ones.
+*Fallback (no subagent capability):* the same recon inline — locate with LSP/Grep, read only the
+surrounding ~50 lines, never a file over ~400 lines whole.
+
+The conventions found MUST be carried into brainstorming — the design follows existing patterns,
+never introduces new ones.
 
 ## Step 2b-2: Convention-Derived Deliverables (mandatory)
 
@@ -82,14 +85,16 @@ Conventions become **generated tasks in the plan's file list**, not prose the pl
 If `.cursor/knowledge-base/` exists and contains `.md` files:
 1. List files, read the first few lines of each to identify coverage
 2. Select the 1-3 most relevant to the feature request
-3. **Always also include the testing KB doc** (test config, utilities, mocks) — under the TDD default every feature includes tests, and relevance-ranking against the feature topic alone will miss it
+3. **Always include the testing KB doc** (config, utilities, mocks) — TDD is the default, and topic-ranking alone misses it
 4. Read those docs for architectural context
 
 If the directory doesn't exist, skip this step.
 
 ## Step 3: Summarize Context
 
-Tell the user: anchoring artifacts loaded (Step 0) and anything that constrains the design; detected archetype and key conventions; codebase conventions from Step 2b; knowledge-base context (Step 2c); available agents (`.cursor/agents/`); relevant patterns from recent commits.
+Tell the user: artifacts loaded and design constraints (Step 0); archetype and key conventions; the Step 2b conventions summary; KB context (Step 2c); available agents (`.cursor/agents/`).
+
+If the scope obviously spans ≤3 files in one layer, say once: "This looks small — consider re-running with `--fast`" — then proceed with the user's choice; never auto-switch.
 
 ## Step 4: Hand Off to Brainstorming
 
@@ -99,13 +104,15 @@ Invoke `superpowers:brainstorming` with the loaded project context — it guides
 
 *Fallback (no superpowers):* restate the goal in one sentence, ask scoping questions (don't over-ask), write the spec yourself to `.cursor/specs/`.
 
-**Do not skip brainstorming.** Every feature goes through the full workflow — `brainstorm → spec → plan → implement → /ko-verify` — and each step chains into the next without the user invoking anything (see Workflow Transitions).
+**Do not skip brainstorming** — every feature goes through `brainstorm → spec → plan → implement → /ko-verify` (see Workflow Transitions).
 
 ## Workflow Transitions
 
 Each step flows into the next without the user invoking anything:
 
 1. Spec approved in brainstorming → immediately invoke `writing-plans` (do not wait for `/ko-implement`). The plan MUST include the convention-derived deliverables from Step 2b-2.
+
+   **Plan economy** — same discipline as specs: file list + task breakdown + short snippets ONLY for load-bearing tricky bits. No full implementations — code is written during TDD execution, not in the plan. If the plan needs scrolling, split phases or cut detail; it is re-fed to every executing step.
 
    **Before committing any spec/plan doc**, run `git check-ignore <path>` — if `.cursor/specs/` is gitignored, skip the commit and say so explicitly; never let a commit silently no-op. Commit only in a git worktree (per `coding-standards.mdc`).
 
@@ -118,7 +125,7 @@ Each step flows into the next without the user invoking anything:
    > 2. **inline** (`superpowers:executing-plans`) — tasks run in this session with review checkpoints; easier to interrupt.
 
    Wait for the answer. **If subagent-driven:** prepend `.cursor/env-recipe.md` to every sub-agent prompt — sub-agents don't share your shell state.
-3. After all plan tasks complete → say "All tasks complete. Running `/ko-verify`." Then invoke `/ko-verify`, followed by `/ko-review` on the diff. If a unit of work was claimed (Step 0b), mark the story `done` and append a bolt-log row with the outcome.
+3. After all plan tasks complete → invoke `/ko-verify`, then `/ko-review` on the diff. If a unit of work was claimed (Step 0b), mark the story `done` and append a bolt-log row with the outcome.
 
 The user invokes `/ko-feature` once; everything else chains automatically. **`/ko-implement`** is for resuming across sessions, not continuing within one.
 

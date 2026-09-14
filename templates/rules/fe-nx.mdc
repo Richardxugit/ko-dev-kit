@@ -76,7 +76,6 @@ Two path alias patterns in `tsconfig.base.json`:
 - TypeScript everywhere; `strict: true` in `tsconfig.base.json`. No implicit `any`, no non-null `!` to silence the compiler.
 - NX orchestrates builds: `pnpm nx <target> <project>`. Use `pnpm nx affected -t build test lint` in CI.
 - pnpm manages dependencies. Single lockfile at root. Add deps with `pnpm add`.
-- Encrypted env files managed via `scripts/crypt.js` (Ansible Vault). Never commit decrypted `.env.secret`.
 
 ## CI & caching
 - Use `pnpm nx affected -t build test lint` in CI so only projects touched by a change run.

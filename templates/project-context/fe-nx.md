@@ -85,7 +85,7 @@ pnpm nx graph
 - **Testing:** New tests → Vitest (`*.vitest.tsx`). Legacy → Jest (`*.test.tsx`).
 - **Accessibility:** WCAG 2.2 AA — see the `wcag-2.2-aa` skill.
 - **Commits:** `type [KO-XXXX]: short description` (e.g. `feat [KO-1234]: add wishlist page`, header ≤ 72 chars; ticket is a commitlint warning, not an error). Enforced by Husky + commitlint. `npx cz` for interactive commits.
-- **Secrets:** Never commit decrypted `.env.secret`. Use `scripts/crypt.js` for local env management.
+- **Secrets:** `.env.secret` local env managed via `scripts/crypt.js` (commands above).
 
 ## Kit commands (/ko-*)
 

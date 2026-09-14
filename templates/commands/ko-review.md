@@ -81,4 +81,4 @@ Write the consolidated review to `.cursor/specs/mr-reviews/<id>.md` per the refe
 - **Findings cite the diff.** No issues invented from memory about code the change set does not touch.
 - **Scope to the change and its immediate blast radius** — not an unrelated-refactor hunt.
 - Read-only to the end: never comment on or modify the PR. If the user wants to post the review, offer a **paste-ready** comment block — they post it themselves.
-- Degrade gracefully: no `gh` → local diff review; no `wcag-2.2-aa` skill → the frontend specialist applies its inline accessibility checklist.
+- Degrade gracefully: no `gh` → local diff review; no `wcag-2.2-aa` skill → the frontend specialist applies the fallback checklist at `.cursor/skills/workflow-refs/references/verify-a11y-checklist.md`.

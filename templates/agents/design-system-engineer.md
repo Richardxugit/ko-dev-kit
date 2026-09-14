@@ -69,10 +69,9 @@ pnpm lint && pnpm test && pnpm build:storybook
 
 State verification outcomes from real command output — never claim a gate passes without having run it. Max 3 attempts at a failing gate; then stop and report **NOT FIXED — attempts exhausted** with the evidence trail.
 
-## Superpowers & Caveman
+## Superpowers
 
 When available, integrate these into your workflow:
 - **`superpowers:brainstorming`** — before designing a new component API or variant system.
 - **`superpowers:test-driven-development`** — write failing test → implement → refactor.
 - **`superpowers:verification-before-completion`** — run all checks before claiming done.
-- **`caveman`** — use for token-efficient responses when activated.

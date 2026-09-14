@@ -36,7 +36,7 @@ A plausible break in existing functionality is **Blocking**. When you cannot pro
 ### `frontend`
 - React/component patterns: state vs props, effect dependencies, memoization correctness, key usage, controlled/uncontrolled inputs, error/loading/empty states.
 - The FE archetype rule (`fe-nx.mdc` / `design-system.mdc`) and component boundaries; duplication that should reuse an existing component.
-- **Accessibility (WCAG 2.2 AA)** — if the `wcag-2.2-aa` skill is installed, use it; otherwise apply this floor: semantic HTML over ARIA, keyboard operability and visible focus, accessible names/labels, color-contrast and not-by-color-alone, target size, error identification, `prefers-reduced-motion`, and an axe check in component tests. Missing keyboard access or accessible names on interactive elements is at least **Should-fix**.
+- **Accessibility (WCAG 2.2 AA)** — if the `wcag-2.2-aa` skill is installed, use it; otherwise apply the fallback checklist at `.cursor/skills/workflow-refs/references/verify-a11y-checklist.md`. Missing keyboard access or accessible names on interactive elements is at least **Should-fix**.
 
 ### `backend`
 - API/contract correctness: resolver/controller signatures, GraphQL schema/SDL and DTO changes, nullability, pagination, error shapes.

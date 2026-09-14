@@ -95,7 +95,7 @@ yarn graphql:publish          # rover schema publish
 - Skills: `nestjs-patterns`, `graphql-apollo`, `apollo-federation`, `serverless-nestjs`.
 - Scaffolding: `/ko-svc-lambda <worker>`, `/ko-svc-nest-app <service>`, `/ko-svc-lib <library>`.
 - **Commits:** `type(scope): KOSM-XXXX: description` (e.g. `feat(orders): KOSM-1234: add loyalty endpoint`). Enforced by Husky + commitlint.
-- **Secrets:** Never commit decrypted `.env.secret`. SSM Parameter Store in production.
+- **Secrets:** `.env.secret` local env (commands above); SSM Parameter Store in production.
 
 ## Kit commands (/ko-*)
 
