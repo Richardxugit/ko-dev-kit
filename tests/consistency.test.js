@@ -174,6 +174,7 @@ describe('anti-overengineering rules', () => {
     expect(standards).toContain('declaration style'); // const-arrow vs function — never mix
     expect(standards).toContain('justify why the existing one'); // new pattern needs justification
     expect(standards).toContain('what each change is FOR'); // no orphan changes
+    expect(standards).toContain('File names: short and clear'); // naming budget for files
   });
 
   it('no template carries caveman references (user-activated mode, not harness routing)', async () => {
