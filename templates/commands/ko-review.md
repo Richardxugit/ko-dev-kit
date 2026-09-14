@@ -41,10 +41,9 @@ Invoke **`superpowers:requesting-code-review`** to structure the review with ver
 
 1. Gather the diff (Step 1) and prior evidence: the newest matching QA report in `.cursor/specs/qa-reports/` (risk areas, introduced failures) and the spec's acceptance criteria when one exists — these prime the reviewer with known risk areas instead of a cold read.
 2. Delegate to the **`code-reviewer`** subagent (in `.cursor/agents/`) with the diff, the repo's rules, and the prior evidence as context.
-3. The reviewer checks: correctness (logic, edge cases, async, error handling), compliance with `.cursor/rules/` + `AGENTS.md` (including the Simplicity rules), design (placement, reuse, small focused units), test coverage of the change, and security (input validation, no secrets).
+3. The reviewer checks: business logic vs the spec's acceptance criteria, convention fidelity (declaration style, reuse-or-justify), simplicity, test quality (would-fail-if-broken, mock discipline), regression blast radius, and security. Its full checklist lives in `.cursor/agents/code-reviewer.md`.
 4. Present findings grouped by severity — **Blocking / Should-fix / Nit** — each as `path:line — problem. Suggested fix.`
 5. If nothing is wrong, say so. Don't manufacture issues.
-6. If a spec exists in `.cursor/specs/` for this work, verify the diff satisfies the acceptance criteria.
 
 ## Mode B: `--team` — specialist review team
 
@@ -52,12 +51,12 @@ Invoke **`superpowers:requesting-code-review`** to structure the review with ver
 
 | # | Dimension | Runs | Focus |
 |---|-----------|------|-------|
-| 1 | **compliance** | always | `.cursor/rules/` + `AGENTS.md` conformance; correctness (logic, edge cases, async, error handling); secrets / input validation |
+| 1 | **compliance** | always | `.cursor/rules/` + `AGENTS.md` conformance; **spec traceability + convention fidelity** (declaration style, reuse-or-justify); correctness; secrets / input validation |
 | 2 | **regression** | always | **the base gate** — blast radius: callers/consumers of changed symbols, API/signature/schema/DTO changes, backward compatibility, migration safety, removed or renamed exports, behavior changes to shared code |
 | 3 | **simplicity** | always | what earns its place — unjustified code, speculative defensive code, premature abstraction, anything not traceable to the requirement |
 | 4 | **frontend** | FE files present | React/component patterns, state & props, the FE archetype rule, **WCAG 2.2 AA** accessibility |
 | 5 | **backend** | BE files present | resolver/API contracts, service/module boundaries, data access (N+1, transactions), auth, idempotency, the BE archetype rule |
-| 6 | **tests** | always | new behavior + edge cases covered, deterministic/isolated, whether existing tests still protect the changed paths |
+| 6 | **tests** | always | **would actually fail if broken**; mock discipline (out-of-process only); behavior assertions not implementation; deterministic/isolated; existing tests still protect changed paths |
 
 Dimensions 1, 2, 3, and 6 always run. Dimensions 4 and 5 run only when the diff touches files of that kind. Each runs as its own `review-specialist` sub-agent — the agent holds the full playbook for every dimension.
 

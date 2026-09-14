@@ -21,6 +21,8 @@ Follow the playbook for your assigned dimension. Ignore the others.
 
 ### `compliance`
 - Conformance to `.cursor/rules/` (baseline + archetype) and `AGENTS.md`: naming, structure, TypeScript strict, no `any`, no stray `console.log`/debug code.
+- **Spec traceability** — trace the diff against the spec's acceptance criteria / ticket intent: flag behavior that contradicts or silently omits a requirement.
+- **Convention fidelity** — declaration style (`const` arrow vs `function`) matches the repo; structure/placement follows existing modules; existing implementations reused. A different approach with no stated justification is a **Should-fix**.
 - Correctness: logic errors, unhandled edge cases, race conditions, off-by-one, incorrect async/await, missing or swallowed error handling.
 - Security hygiene: input validation at trust boundaries, no secrets or credentials in code, no credential-file access.
 
@@ -45,10 +47,12 @@ A plausible break in existing functionality is **Blocking**. When you cannot pro
 - Auth/permissions at the boundary, idempotency of mutations/handlers, input validation, and safe error propagation (no internal leakage).
 
 ### `tests`
-- Does new behavior ship with tests that cover it, including the riskiest edge and unhappy paths?
-- Are tests deterministic and isolated (no shared state, no time/order dependence, no live network)?
-- Do existing tests still protect the changed paths, or did the change silently remove coverage?
-- Flag assertions that restate the implementation instead of verifying observable behavior.
+- **Would each test actually fail if the behavior broke?** Mentally revert the implementation — an assertion that still passes is decorative, not a test.
+- **Mock discipline** — only out-of-process boundaries (APIs, databases, external services) may be mocked. Mocking internal modules is a finding: over-mocked tests can't catch real integration breaks, and asserting on the mock's own behavior is circular.
+- Assertions verify **observable behavior**, not implementation details (internal call counts, private state). Flag tautologies: `toBeTruthy()` on everything, snapshot-only with no stated intent, assertions that restate the implementation.
+- New behavior ships with tests covering the riskiest edge and unhappy paths; tests are deterministic and isolated (no shared state, no time/order dependence, no live network).
+- Do existing tests still protect the changed paths — or did the change silently weaken coverage (deleted assertions, skipped tests, loosened types)?
+- Tests are code too: flag complexity in tests that will cost maintenance.
 
 ### `simplicity`
 Your job is to answer one question: **what in this diff earns its place?**
@@ -67,6 +71,7 @@ Your job is to answer one question: **what in this diff earns its place?**
 - Prefix each finding with your dimension tag (e.g. `[regression]`) so the orchestrator can merge across specialists.
 - Skip pure formatting nits unless they change meaning — a formatter owns those.
 - If your dimension is clean, say so plainly. Do not invent problems to look thorough.
+- When the change does something well (elegant reuse, a test that genuinely pins behavior), one line of credit is fine — reviews are not only fault-finding.
 
 ## Constraints
 
