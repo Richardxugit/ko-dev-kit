@@ -326,6 +326,7 @@ describe('kit-wide staleness lint (dev-kit slice)', () => {
     { file: 'commands/ko-release-verify.md', token: 'Preflight' },
     { file: 'commands/ko-release-verify.md', token: 'read-only' },
     { file: 'commands/ko-pr-desc.md', token: 'Preflight' },
+    { file: 'commands/ko-pr-desc.md', token: 'title content' }, // ticket + slug, never ticket-only when a slug exists
     { file: 'skills/workflow-refs/references/feature-input-fetching.md', token: 'Atlassian MCP' },
     { file: 'commands/ko-bugfix.md', token: 'Atlassian MCP' },
     { file: 'commands/ko-ds-component.md', token: 'Atlassian MCP' },
