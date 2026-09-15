@@ -28,12 +28,12 @@ Extract the title using this pattern:
 
 | Branch pattern | PR title |
 |---|---|
-| `feat/CON-1234` | `feat: CON-1234` |
-| `fix/OXP-5678-short-desc` | `fix: OXP-5678` |
-| `chore/KO-42-update-deps` | `chore: KO-42` |
-| `refactor/no-ticket-slug` | `refactor: no-ticket-slug` |
+| `feat/CON-1234-add-cart-page` | `feat: CON-1234 Add cart page` |
+| `fix/OXP-5678-short-desc` | `fix: OXP-5678 Short desc` |
+| `feat/CON-1234` (no slug) | `feat: CON-1234 <summary from commit messages>` |
+| `refactor/no-ticket-slug` | `refactor: No ticket slug` |
 
-Rule: split on `/`, take the prefix as the type; extract the ticket pattern (`[A-Z]+-[0-9]+`) from the remainder if present, otherwise use the full slug. Keep the title under 72 characters.
+Rule: split on `/`, take the prefix as the type; extract the ticket pattern (`[A-Z]+-[0-9]+`) from the remainder if present. The remaining slug becomes the title content — hyphens/underscores to spaces, capitalize the first letter, sentence case (`MTP-161-create-seller-portal-page-structure` → `MTP-161 Create seller portal page structure`). No slug → derive the content from the branch's commit messages (imperative, ≤6 words). A ticket alone (`feat: CON-1234`) is only acceptable when no slug and no usable commit message exist. Keep the title under 72 characters.
 
 ## Step 2: Load the PR Template
 
