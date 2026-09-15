@@ -203,7 +203,7 @@ bug pass on top — `/ko-review` reads its comments and dedupes against them.
 ### Shared commands (`fe-nx` / `nestjs-graphql` only)
 | Command | Purpose |
 |---------|---------|
-| `/ko-feature` | End-to-end feature workflow (clarify → design → implement → verify); claims a matching unit of work |
+| `/ko-feature [--fast] [--pair]` | End-to-end feature workflow (clarify → design → implement → verify); claims a matching unit of work. `--fast` trades depth for speed; `--pair` runs execution as a step-by-step pair loop — the human approves each task and can take over anytime |
 | `/ko-spike` | Timeboxed throwaway experiment → findings doc + go/no-go decision; never merges |
 | `/ko-implement` | Resume/execute a plan from `.cursor/specs/` with checkpoints; picks up in-progress unit stories |
 

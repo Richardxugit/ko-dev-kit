@@ -191,6 +191,16 @@ describe('anti-overengineering rules', () => {
     expect(feature).toContain('--fast`'); // small-scope suggestion
   });
 
+  it('ko-feature wires --pair to its workflow-refs reference', () => {
+    const feature = fs.readFileSync(path.join(templateDir, 'commands', 'ko-feature.md'), 'utf-8');
+    expect(feature).toContain('--pair');
+    expect(feature).toContain('workflow-refs/references/feature-pair-mode.md');
+    const ref = fs.readFileSync(
+      path.join(templateDir, 'skills', 'workflow-refs', 'references', 'feature-pair-mode.md'), 'utf-8');
+    expect(ref).toContain('never subagent-driven'); // pairing forbids fan-out
+    expect(ref).toContain('Checkpoint after EVERY task'); // the core cadence rule
+  });
+
   it('review-specialist a11y fallback points at the shared checklist (no inline restatement)', () => {
     const agent = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
     expect(agent).toContain('workflow-refs/references/verify-a11y-checklist.md');
