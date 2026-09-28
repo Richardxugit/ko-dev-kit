@@ -4,8 +4,12 @@
     "beforeReadFile": [
       { "command": "node .cursor/hooks/privacy-block.cjs" }
     ],
-    "beforeShellExecution": [
+    "beforeTabFileRead": [
       { "command": "node .cursor/hooks/privacy-block.cjs" }
+    ],
+    "beforeShellExecution": [
+      { "command": "node .cursor/hooks/privacy-block.cjs" },
+      { "command": "node .cursor/hooks/safety-guard.cjs" }
     ],
     "beforeMCPExecution": [
       { "command": "node .cursor/hooks/privacy-block.cjs" }
