@@ -137,7 +137,7 @@ Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo an
 | Subagents | `.cursor/agents/*.md` | kit-managed |
 | Rules | `.cursor/rules/*.mdc` | merge-protected (see below) |
 | Project context | root `AGENTS.md` | user-protected |
-| Privacy hook | `.cursor/hooks/privacy-block.cjs` + `.cursor/hooks.json` | script kit-managed; `hooks.json` user-protected |
+| Hooks | `.cursor/hooks/privacy-block.cjs` + `safety-guard.cjs` + `.cursor/hooks.json` | scripts kit-managed; `hooks.json` user-protected |
 | MCP servers | `.cursor/mcp.json` | user-protected |
 | CLI permissions | `.cursor/cli.json` | user-protected |
 
@@ -156,7 +156,7 @@ merge manually, then delete the `.kit-update` file.
 - commands: `ko-onboard`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-verify`
 - commands (all except design-system): `ko-feature`, `ko-spike`, `ko-implement`
 - agents: `code-reviewer`, `review-specialist`
-- hook: `privacy-block`; settings: `cli.json` (`.cursor/mcp.json` is generated per archetype set — union of recommended servers)
+- hooks: `privacy-block`, `safety-guard`; settings: `cli.json` (`.cursor/mcp.json` is generated per archetype set — union of recommended servers)
 
 | Archetype | rule | skills | commands | agent |
 |---|---|---|---|---|
@@ -272,7 +272,12 @@ with your existing rules.
   versions, commands and rules still work.
 - **Rules** apply automatically: `coding-standards.mdc` is always on; the archetype rule attaches
   by its `globs`. `AGENTS.md` is loaded by Cursor as project context.
-- **Hooks**: only a privacy hook ships (denies reads/shell/MCP touching likely-secret files).
+- **Hooks**: `privacy-block` denies reads/shell/MCP/Tab reads touching likely-secret files;
+  `safety-guard` denies destructive shell commands (force push without lease, `reset --hard`,
+  `clean -f`, `checkout --`, broad `rm -rf`, local `npm/pnpm/yarn publish`) and names the safe
+  alternative. `hooks.json` is user-protected: existing repos upgrading from a version with only
+  the privacy hook must merge the new entries manually (or delete `.cursor/hooks.json` and re-run
+  `ko-dev-kit init`) — the scripts themselves are copied on init as usual.
 
 ## Develop
 
@@ -301,7 +306,7 @@ ko-dev-kit/
 │   ├── agents/           # Subagent definitions (5 agents)
 │   ├── project-context/  # AGENTS.md templates per archetype (3 files)
 │   ├── commands/         # Slash command definitions (18 commands)
-│   ├── hooks/            # Privacy hook script + config
+│   ├── hooks/            # Hook scripts (privacy + safety)
 │   ├── rules/            # .mdc rule files (4 rules)
 │   ├── settings/         # CLI permissions + MCP config
 │   └── skills/           # Skill definitions (15 skills)
