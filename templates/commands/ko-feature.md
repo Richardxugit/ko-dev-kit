@@ -95,7 +95,7 @@ If the directory doesn't exist, skip this step.
 
 Tell the user: artifacts and design constraints (Step 0); archetype and key conventions; Step 2b conventions summary; KB context (Step 2c); available agents (`.cursor/agents/`).
 
-If the scope obviously spans ≤3 files in one layer, say once: "This looks small — consider re-running with `--fast`" — proceed with the user's choice; never auto-switch.
+**Profile by evidence, not flag:** auto-select fast/standard per `.cursor/skills/workflow-refs/references/feature-profile-selection.md`; announce pick + reason. Explicit flags always win.
 
 ## Step 4: Hand Off to Brainstorming
 

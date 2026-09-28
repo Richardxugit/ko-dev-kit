@@ -191,6 +191,17 @@ describe('anti-overengineering rules', () => {
     expect(feature).toContain('--fast`'); // small-scope suggestion
   });
 
+  it('ko-feature auto-selects profile by evidence, wired to its reference', () => {
+    const feature = fs.readFileSync(path.join(templateDir, 'commands', 'ko-feature.md'), 'utf-8');
+    expect(feature).toContain('feature-profile-selection.md');
+    expect(feature).toContain('Explicit flags always win'); // user override survives
+    const ref = fs.readFileSync(
+      path.join(templateDir, 'skills', 'workflow-refs', 'references', 'feature-profile-selection.md'), 'utf-8');
+    expect(ref).toContain('≤3 files'); // scope criterion
+    expect(ref).toContain('design signals'); // ambiguity veto
+    expect(ref).toContain('never silently switch'); // announce + override
+  });
+
   it('ko-feature wires --pair to its workflow-refs reference', () => {
     const feature = fs.readFileSync(path.join(templateDir, 'commands', 'ko-feature.md'), 'utf-8');
     expect(feature).toContain('--pair');
