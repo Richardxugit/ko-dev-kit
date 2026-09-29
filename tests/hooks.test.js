@@ -305,6 +305,100 @@ process.exit(Number(process.env.FAKE_ESLINT_EXIT || 0));
   });
 });
 
+describe('context-usage.cjs', () => {
+  const run = (payload, env = {}, stateDir) => {
+    const out = execFileSync('node', [path.join(hooksDir, 'context-usage.cjs')], {
+      input: JSON.stringify(payload),
+      encoding: 'utf-8',
+      env: {
+        ...process.env,
+        KO_CONTEXT_STATE_DIR: stateDir || fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ctx-')),
+        ...env,
+      },
+    });
+    return JSON.parse(out);
+  };
+  const response = (tokens, conversationId = 'c1') => ({
+    hook_event_name: 'afterAgentResponse',
+    conversation_id: conversationId,
+    input_tokens: tokens,
+    cache_read_tokens: 0,
+    cache_write_tokens: 0,
+    model: 'claude-sonnet',
+  });
+  const toolUse = (conversationId = 'c1') => ({
+    hook_event_name: 'postToolUse',
+    conversation_id: conversationId,
+    tool_name: 'Read',
+    tool_input: {},
+    tool_output: '',
+  });
+
+  it('warns once when context crosses the warn threshold, then stays silent', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ctx-'));
+    run(response(120_000), {}, dir); // 60% of default 200K window
+    const first = run(toolUse(), {}, dir);
+    expect(first.additional_context).toContain('context-usage:');
+    const second = run(toolUse(), {}, dir);
+    expect(second.additional_context).toBeUndefined();
+  });
+
+  it('escalates to the handoff message near the window', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ctx-'));
+    run(response(160_000), {}, dir); // 80%
+    const decision = run(toolUse(), {}, dir);
+    expect(decision.additional_context).toMatch(/handoff|wrap/i);
+  });
+
+  it('stays silent below the warn threshold', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ctx-'));
+    run(response(50_000), {}, dir);
+    expect(run(toolUse(), {}, dir).additional_context).toBeUndefined();
+  });
+
+  it('re-arms after context drops (e.g. /summarize)', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ctx-'));
+    run(response(120_000), {}, dir);
+    run(toolUse(), {}, dir); // fires warn
+    run(response(30_000), {}, dir); // summarized
+    expect(run(toolUse(), {}, dir).additional_context).toBeUndefined();
+    run(response(130_000), {}, dir); // climbs again
+    expect(run(toolUse(), {}, dir).additional_context).toContain('context-usage:');
+  });
+
+  it('honours env overrides for window and thresholds', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ctx-'));
+    const env = { KO_CONTEXT_WINDOW: '10000', KO_CONTEXT_WARN: '5000' };
+    run(response(6_000), env, dir);
+    expect(run(toolUse(), env, dir).additional_context).toContain('context-usage:');
+  });
+
+  it('is fully disabled by KO_CONTEXT_BUDGET=off', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ctx-'));
+    run(response(199_000), {}, dir);
+    expect(run(toolUse(), { KO_CONTEXT_BUDGET: 'off' }, dir).additional_context).toBeUndefined();
+  });
+
+  it('tracks conversations independently', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ctx-'));
+    run(response(120_000, 'c1'), {}, dir);
+    run(response(10_000, 'c2'), {}, dir);
+    expect(run(toolUse('c2'), {}, dir).additional_context).toBeUndefined();
+    expect(run(toolUse('c1'), {}, dir).additional_context).toContain('context-usage:');
+  });
+
+  it('stays silent with no state file, unknown events, and unparseable stdin', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ctx-'));
+    expect(run(toolUse(), {}, dir).additional_context).toBeUndefined();
+    expect(run({ hook_event_name: 'mystery' }, {}, dir).additional_context).toBeUndefined();
+    const out = execFileSync('node', [path.join(hooksDir, 'context-usage.cjs')], {
+      input: 'not json',
+      encoding: 'utf-8',
+    });
+    expect(JSON.parse(out)).toEqual({});
+  });
+});
+
 describe('hooks.json consistency', () => {
   const config = JSON.parse(fs.readFileSync(path.join(templateDir, 'settings', 'hooks.json'), 'utf-8'));
   const hookFiles = fs.readdirSync(hooksDir).filter((f) => f.endsWith('.cjs'));

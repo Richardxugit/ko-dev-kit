@@ -156,7 +156,7 @@ merge manually, then delete the `.kit-update` file.
 - commands: `ko-onboard`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-verify`
 - commands (all except design-system): `ko-feature`, `ko-spike`, `ko-implement`
 - agents: `code-reviewer`, `review-specialist`
-- hooks: `privacy-block`, `safety-guard` (+ `destructive-rules.json` policy), `grep-negative`; settings: `cli.json` (`.cursor/mcp.json` is generated per archetype set — union of recommended servers)
+- hooks: `privacy-block`, `safety-guard` (+ `destructive-rules.json` policy), `grep-negative`, `context-usage`; settings: `cli.json` (`.cursor/mcp.json` is generated per archetype set — union of recommended servers)
 
 | Archetype | rule | skills | commands | agent |
 |---|---|---|---|---|
@@ -283,12 +283,18 @@ with your existing rules.
   `grep-negative` runs on `postToolUse` (matcher `Grep`): when a case-sensitive search returns
   nothing, it reminds the agent that the literal being absent is not the concept being absent —
   re-run case-insensitively with codebase variants before asserting absence.
+  `context-usage` pairs `afterAgentResponse` (records each turn's real token count) with
+  `postToolUse` (warns): two levels on the way to the context window — 50% suggests deciding at
+  the next phase boundary, 75% says Cursor's auto-summarize is close and to wrap up cleanly.
+  Re-arms after context drops; `KO_CONTEXT_WINDOW` / `KO_CONTEXT_WARN` / `KO_CONTEXT_HANDOFF`
+  override, `KO_CONTEXT_BUDGET=off` disables.
   `edit-lint` runs on `postToolUse` (matcher `Write`): after the agent edits a
   TS/JS file it lints just that file with the project's own eslint and feeds errors back as
   `additional_context` — per-file cooldown, errors only, silent when the project has no eslint.
   `hooks.json` is user-protected: existing repos upgrading must merge new entries manually (or
   delete `.cursor/hooks.json` and re-run `ko-dev-kit init`) — the scripts are copied as usual.
-  This release adds the `grep-negative` wiring, so pre-existing installs need that merge.
+  This release adds the `grep-negative` + `context-usage` wiring, so pre-existing installs need
+  that merge.
 
 ## Develop
 

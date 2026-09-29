@@ -16,7 +16,11 @@
     ],
     "postToolUse": [
       { "command": "node .cursor/hooks/edit-lint.cjs", "matcher": "Write", "timeout": 10 },
-      { "command": "node .cursor/hooks/grep-negative.cjs", "matcher": "Grep", "timeout": 5 }
+      { "command": "node .cursor/hooks/grep-negative.cjs", "matcher": "Grep", "timeout": 5 },
+      { "command": "node .cursor/hooks/context-usage.cjs", "timeout": 5 }
+    ],
+    "afterAgentResponse": [
+      { "command": "node .cursor/hooks/context-usage.cjs", "timeout": 5 }
     ]
   }
 }
