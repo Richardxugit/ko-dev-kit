@@ -156,7 +156,7 @@ merge manually, then delete the `.kit-update` file.
 - commands: `ko-onboard`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-verify`
 - commands (all except design-system): `ko-feature`, `ko-spike`, `ko-implement`
 - agents: `code-reviewer`, `review-specialist`
-- hooks: `privacy-block`, `safety-guard` (+ `destructive-rules.json` policy), `grep-negative`, `context-usage`; settings: `cli.json` (`.cursor/mcp.json` is generated per archetype set — union of recommended servers)
+- hooks: `privacy-block`, `safety-guard` (+ `destructive-rules.json` policy), `grep-negative`, `context-usage`, `session-ledger`; settings: `cli.json` (`.cursor/mcp.json` is generated per archetype set — union of recommended servers)
 
 | Archetype | rule | skills | commands | agent |
 |---|---|---|---|---|
@@ -213,6 +213,7 @@ bug pass on top — `/ko-review` reads its comments and dedupes against them.
 | `/ko-release-verify` | Jira tickets → PRs → Buildkite deploy state → release runbook (never deploys) | `ko-dev-kit install command ko-release-verify` |
 | `/ko-knowledge-gen` | Generate knowledge base — full repo or focused topic | `ko-dev-kit install command ko-knowledge-gen` |
 | `/ko-new-command` | Create a new custom `/ko-*` command from plain-English description | `ko-dev-kit install command ko-new-command` |
+| `/ko-session-metrics` | What sessions actually cost — turns, tokens, peak context, tool usage; aggregate percentiles calibrate the `context-usage` hook | `ko-dev-kit install command ko-session-metrics` |
 
 ### fe-nx commands
 | Command | Purpose |
@@ -288,6 +289,9 @@ with your existing rules.
   the next phase boundary, 75% says Cursor's auto-summarize is close and to wrap up cleanly.
   Re-arms after context drops; `KO_CONTEXT_WINDOW` / `KO_CONTEXT_WARN` / `KO_CONTEXT_HANDOFF`
   override, `KO_CONTEXT_BUDGET=off` disables.
+  `session-ledger` appends a metadata-only event stream (timestamps, token counts, model, tool
+  names — never message content) to a tmpdir ledger; `/ko-session-metrics` (manual-tier) turns it
+  into per-session reports and aggregate peak-context percentiles for calibrating `context-usage`.
   `edit-lint` runs on `postToolUse` (matcher `Write`): after the agent edits a
   TS/JS file it lints just that file with the project's own eslint and feeds errors back as
   `additional_context` — per-file cooldown, errors only, silent when the project has no eslint.
@@ -322,11 +326,11 @@ ko-dev-kit/
 ├── templates/
 │   ├── agents/           # Subagent definitions (5 agents)
 │   ├── project-context/  # AGENTS.md templates per archetype (3 files)
-│   ├── commands/         # Slash command definitions (18 commands)
+│   ├── commands/         # Slash command definitions (19 commands)
 │   ├── hooks/            # Hook scripts (.cjs) + hook policy data (destructive-rules.json)
 │   ├── rules/            # .mdc rule files (4 rules)
 │   ├── settings/         # CLI permissions + MCP config
-│   └── skills/           # Skill definitions (15 skills)
+│   └── skills/           # Skill definitions (16 skills)
 ├── tests/                # Vitest: detect, consistency
 ├── package.json
 └── README.md

@@ -334,6 +334,7 @@ describe('kit-wide staleness lint (dev-kit slice)', () => {
     { name: 'ko-release without -verify (renamed)', re: /ko-release(?!-verify)/ },
   ];
   const REQUIRED = [
+    { file: 'commands/ko-session-metrics.md', token: 'report.mjs' },
     { file: 'commands/ko-release-verify.md', token: 'Preflight' },
     { file: 'commands/ko-release-verify.md', token: 'read-only' },
     { file: 'commands/ko-pr-desc.md', token: 'Preflight' },

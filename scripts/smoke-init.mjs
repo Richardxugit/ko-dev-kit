@@ -64,10 +64,10 @@ const FIXTURES = [
 ];
 
 // Manual-tier commands must never be auto-installed, in any fixture.
-const MANUAL = ['ko-new-command', 'ko-knowledge-gen', 'ko-release-verify'];
+const MANUAL = ['ko-new-command', 'ko-knowledge-gen', 'ko-release-verify', 'ko-session-metrics'];
 
 // Auto-installed for every archetype, in every fixture.
-const ALWAYS = ['.cursor/commands/ko-pr-desc.md', '.cursor/skills/workflow-refs/SKILL.md', '.cursor/skills/workflow-refs/references/verify-baseline.md'];
+const ALWAYS = ['.cursor/commands/ko-pr-desc.md', '.cursor/skills/workflow-refs/SKILL.md', '.cursor/skills/workflow-refs/references/verify-baseline.md', '.cursor/skills/session-metrics/scripts/report.mjs'];
 
 let failures = 0;
 for (const fixture of FIXTURES) {
