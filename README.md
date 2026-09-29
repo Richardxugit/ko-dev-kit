@@ -109,8 +109,9 @@ ko-dev-kit export ko-svc-nest-app --plugin
 
 Produces a self-contained folder the recipient copies into their `.cursor/` (or, with
 `--plugin`, drops into `~/.cursor/plugins/local/`). No Node, no CLI required on their end.
-Dependencies come from the command's frontmatter keys (`skills`/`agents`/`rules`/`skills-optional`);
-commands without them fall back to a body scan.
+Dependencies come from the command's frontmatter keys (`skills`/`agents`/`rules`/`skills-optional`)
+plus body citations like `.cursor/skills/<name>/…`; the manifest follows the marketplace shape
+(displayName/author/license/category/folder pointers) and ships a LICENSE (`--author`, `--license`).
 
 ### Mint a custom plugin
 
@@ -119,14 +120,18 @@ commands without them fall back to a body scan.
 ko-dev-kit export-plugin
 
 # Non-interactive
-ko-dev-kit export-plugin -n backend-starter -c ko-svc-nest-app,ko-svc-lib -d "NestJS scaffolding helpers"
+ko-dev-kit export-plugin -n backend-starter -c ko-svc-nest-app,ko-svc-lib -d "NestJS scaffolding helpers" \
+  --author "Jane Doe <jane@corp.com>" --category developer-tools --keywords nestjs,scaffolding
 ```
 
-The result in `exported/<name>/` contains everything the plugin needs — the commands, the
-union of their skill/agent/rule dependencies, an auto-merged `mcp.json` when the commands
-require MCP servers, a `.cursor-plugin/plugin.json` manifest, and a README with install steps.
-Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo and import it via
-**Cursor Dashboard → Plugins → Add Marketplace**.
+The result in `exported/<name>/` is **marketplace-ready** — the commands, the union of their
+skill/agent/rule dependencies (including skills only cited in command bodies), the kit hooks
+(`hooks/` + `hooks.json` with plugin-relative paths, opt out with `--no-hooks`), an auto-generated
+`mcp.json` (union of the MCP servers for the archetypes that own the selected commands; shared
+commands contribute atlassian), a `.cursor-plugin/plugin.json` manifest, a LICENSE, and a README.
+Project-scope references to bundled skills (`.cursor/skills/…`) are rewritten to plugin-relative
+paths on export. Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo
+and import it via **Cursor Dashboard → Plugins → Add Marketplace**.
 
 ## What gets installed
 
