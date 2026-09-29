@@ -399,6 +399,73 @@ describe('context-usage.cjs', () => {
   });
 });
 
+describe('session-ledger.cjs', () => {
+  const run = (payload, dir) => {
+    const out = execFileSync('node', [path.join(hooksDir, 'session-ledger.cjs')], {
+      input: JSON.stringify(payload),
+      encoding: 'utf-8',
+      env: { ...process.env, KO_SESSION_LEDGER_DIR: dir },
+    });
+    return JSON.parse(out);
+  };
+  const readLedger = (dir) => {
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.jsonl'));
+    if (files.length !== 1) return { files, lines: [] };
+    const lines = fs.readFileSync(path.join(dir, files[0]), 'utf-8').trim().split('\n').map(JSON.parse);
+    return { files, lines };
+  };
+
+  it('records a turn with per-model token usage', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    const decision = run({
+      hook_event_name: 'afterAgentResponse', conversation_id: 'c1', model: 'claude-sonnet',
+      input_tokens: 100, output_tokens: 20, cache_read_tokens: 900, cache_write_tokens: 10,
+    }, dir);
+    expect(decision).toEqual({}); // ledger never feeds back
+    const { lines } = readLedger(dir);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatchObject({ t: 'turn', model: 'claude-sonnet', in: 100, out: 20, cr: 900, cw: 10 });
+    expect(typeof lines[0].ts).toBe('number');
+  });
+
+  it('records tool calls with duration and stop events', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    run({ hook_event_name: 'postToolUse', conversation_id: 'c1', tool_name: 'Read', duration: 120 }, dir);
+    run({ hook_event_name: 'stop', conversation_id: 'c1', status: 'completed' }, dir);
+    const { lines } = readLedger(dir);
+    expect(lines[0]).toMatchObject({ t: 'tool', tool: 'Read', ms: 120 });
+    expect(lines[1]).toMatchObject({ t: 'stop', status: 'completed' });
+  });
+
+  it('skips turns that carry no usage fields', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    run({ hook_event_name: 'afterAgentResponse', conversation_id: 'c1' }, dir);
+    expect(fs.existsSync(dir) ? fs.readdirSync(dir).length : 0).toBe(0);
+  });
+
+  it('keeps conversations in separate ledgers', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    run({ hook_event_name: 'stop', conversation_id: 'c1', status: 'completed' }, dir);
+    run({ hook_event_name: 'stop', conversation_id: 'c2', status: 'completed' }, dir);
+    expect(fs.readdirSync(dir).filter((f) => f.endsWith('.jsonl'))).toHaveLength(2);
+  });
+
+  it('never records message content and fails silent on garbage', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    run({
+      hook_event_name: 'afterAgentResponse', conversation_id: 'c1', input_tokens: 5,
+      text: 'SECRET USER PROMPT TEXT', model: 'm',
+    }, dir);
+    const { lines } = readLedger(dir);
+    expect(JSON.stringify(lines)).not.toContain('SECRET');
+    const out = execFileSync('node', [path.join(hooksDir, 'session-ledger.cjs')], {
+      input: 'not json', encoding: 'utf-8',
+      env: { ...process.env, KO_SESSION_LEDGER_DIR: dir },
+    });
+    expect(JSON.parse(out)).toEqual({});
+  });
+});
+
 describe('hooks.json consistency', () => {
   const config = JSON.parse(fs.readFileSync(path.join(templateDir, 'settings', 'hooks.json'), 'utf-8'));
   const hookFiles = fs.readdirSync(hooksDir).filter((f) => f.endsWith('.cjs'));
