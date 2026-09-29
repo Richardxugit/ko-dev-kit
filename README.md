@@ -306,12 +306,15 @@ with your existing rules.
 pnpm install
 pnpm test          # vitest: detection, consistency
 pnpm test:watch
+pnpm dup-check     # description-overlap audit: no two resources compete for the same request
 ```
 
 Templates live in `templates/`. Add a resource there and, if it's archetype-specific, register it
 in `ARCHETYPE_RESOURCES` in `src/scaffold.js` (otherwise it's treated as shared across all 3
 archetypes). `tests/consistency.test.js` validates archetype labels/refs, template existence,
-command frontmatter schema, and declared-dependency existence/compatibility.
+command frontmatter schema, and declared-dependency existence/compatibility. New resource
+descriptions must keep `pnpm dup-check --strict` green — an intentional overlap goes in the
+script's ACCEPTED_PAIRS with a reason.
 
 ## Project structure
 
