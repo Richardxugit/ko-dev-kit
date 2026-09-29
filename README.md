@@ -137,7 +137,7 @@ Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo an
 | Subagents | `.cursor/agents/*.md` | kit-managed |
 | Rules | `.cursor/rules/*.mdc` | merge-protected (see below) |
 | Project context | root `AGENTS.md` | user-protected |
-| Hooks | `.cursor/hooks/*.cjs` + `destructive-rules.json` + `.cursor/hooks.json` | scripts kit-managed; policy JSON merge-protected; `hooks.json` user-protected |
+| Hooks | `.cursor/hooks/*.cjs` + `destructive-rules.json` + `.cursor/hooks.json` | scripts kit-managed; policy JSON merge-protected; `hooks.json` merged (see below) |
 | MCP servers | `.cursor/mcp.json` | user-protected |
 | CLI permissions | `.cursor/cli.json` | user-protected |
 
@@ -295,10 +295,10 @@ with your existing rules.
   `edit-lint` runs on `postToolUse` (matcher `Write`): after the agent edits a
   TS/JS file it lints just that file with the project's own eslint and feeds errors back as
   `additional_context` — per-file cooldown, errors only, silent when the project has no eslint.
-  `hooks.json` is user-protected: existing repos upgrading must merge new entries manually (or
-  delete `.cursor/hooks.json` and re-run `ko-dev-kit init`) — the scripts are copied as usual.
-  This release adds the `grep-negative` + `context-usage` wiring, so pre-existing installs need
-  that merge.
+  `hooks.json` is **merged** on re-init: kit-owned entries sync to the template (new wiring and
+  matcher/timeout fixes reach existing installs automatically), your own entries are kept
+  verbatim, and an unparseable file is left untouched. To disable a kit wiring, delete the
+  entry — note a re-init re-adds it, so prefer the hook's env kill-switch where one exists.
 
 ## Develop
 

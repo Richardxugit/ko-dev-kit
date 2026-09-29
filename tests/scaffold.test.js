@@ -123,6 +123,55 @@ describe('scaffoldProject', () => {
     expect(result.skipped).toContain('.cursor/mcp.json');
   });
 
+  it('hooks.json: existing install gains NEW kit wiring, user entries untouched', async () => {
+    // a repo that scaffolded before grep-negative/context-usage existed
+    await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    const cfgPath = path.join(tmpDir, '.cursor', 'hooks.json');
+    const cfg = await fs.readJson(cfgPath);
+    cfg.hooks.postToolUse = cfg.hooks.postToolUse.filter(
+      (h) => !h.command.includes('grep-negative') && !h.command.includes('context-usage'),
+    );
+    cfg.hooks.beforeShellExecution.push({ command: 'node .cursor/hooks/my-own-guard.cjs' });
+    await fs.writeJson(cfgPath, cfg, { spaces: 2 });
+
+    const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    const after = await fs.readJson(cfgPath);
+    const post = after.hooks.postToolUse.map((h) => h.command);
+    expect(post.some((c) => c.includes('grep-negative'))).toBe(true);
+    expect(post.some((c) => c.includes('context-usage'))).toBe(true);
+    expect(after.hooks.beforeShellExecution.some((h) => h.command.includes('my-own-guard'))).toBe(true);
+    expect(result.updated).toContain('.cursor/hooks.json');
+  });
+
+  it('hooks.json: a changed kit matcher/timeout syncs on re-scaffold', async () => {
+    await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    const cfgPath = path.join(tmpDir, '.cursor', 'hooks.json');
+    const cfg = await fs.readJson(cfgPath);
+    const entry = cfg.hooks.postToolUse.find((h) => h.command.includes('grep-negative'));
+    entry.timeout = 99; // simulate drift from the template
+    await fs.writeJson(cfgPath, cfg, { spaces: 2 });
+
+    await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    const after = await fs.readJson(cfgPath);
+    const synced = after.hooks.postToolUse.find((h) => h.command.includes('grep-negative'));
+    const template = await fs.readJson(path.join(templateDir, 'settings', 'hooks.json'));
+    const wanted = template.hooks.postToolUse.find((h) => h.command.includes('grep-negative'));
+    expect(synced.timeout).toBe(wanted.timeout);
+  });
+
+  it('hooks.json: malformed existing file is left untouched (fail safe)', async () => {
+    await fs.outputFile(path.join(tmpDir, '.cursor', 'hooks.json'), 'not json {');
+    const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    expect(await fs.readFile(path.join(tmpDir, '.cursor', 'hooks.json'), 'utf-8')).toBe('not json {');
+    expect(result.skipped).toContain('.cursor/hooks.json');
+  });
+
+  it('hooks.json: byte-identical existing file reports no update', async () => {
+    await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    expect(result.updated).not.toContain('.cursor/hooks.json');
+  });
+
   it('multi-archetype repos get a minimal AGENTS.md skeleton, not an archetype template', async () => {
     await scaffoldProject(tmpDir, ['nestjs-graphql', 'react-app'], templateDir);
     const agents = await fs.readFile(path.join(tmpDir, 'AGENTS.md'), 'utf-8');

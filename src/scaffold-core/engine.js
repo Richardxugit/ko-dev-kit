@@ -97,11 +97,17 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
     }
   }
 
-  await copyIfNotExists(
+  // hooks.json is neither kit-managed nor frozen — it is MERGED in place:
+  // kit-owned entries (scripts the kit installed) sync to the template, so new
+  // wiring and matcher/timeout fixes reach existing installs on re-init;
+  // user entries (their own scripts) are preserved verbatim. An unparseable
+  // existing file is left untouched and reported as skipped.
+  await mergeHooksConfig(
     path.join(templateDir, 'settings', 'hooks.json'),
     path.join(projectDir, '.cursor', 'hooks.json'),
     '.cursor/hooks.json',
-    created, skipped
+    manifest,
+    created, updated, skipped
   );
 
   if (targets.length === 1) {
@@ -399,6 +405,62 @@ ${ruleRefs}
 <!-- run /ko-onboard — it explores the real repo and replaces this skeleton with the
 actual structure, stack, commands, and conventions for every stack present -->
 `;
+}
+
+// Merge the kit's hooks.json into an existing one. Kit-owned entries — those
+// whose command references a hook script the kit installed (in the template or
+// the manifest) — sync to the template: new wiring lands, matcher/timeout
+// drift self-heals, wirings the kit dropped disappear. User entries (their own
+// scripts) are preserved verbatim and appended after the kit entries.
+async function mergeHooksConfig(src, dest, relPath, manifest, created, updated, skipped) {
+  if (!await fs.pathExists(src)) return;
+  if (!await fs.pathExists(dest)) {
+    await fs.ensureDir(path.dirname(dest));
+    await fs.copy(src, dest);
+    created.push(relPath);
+    return;
+  }
+  let userCfg, kitCfg;
+  try {
+    userCfg = JSON.parse(await fs.readFile(dest, 'utf-8'));
+    kitCfg = JSON.parse(await fs.readFile(src, 'utf-8'));
+  } catch {
+    skipped.push(relPath);
+    return;
+  }
+  if (!userCfg?.hooks || !kitCfg?.hooks) {
+    skipped.push(relPath);
+    return;
+  }
+
+  const kitScriptNames = new Set(
+    Object.values(kitCfg.hooks).flat()
+      .map((h) => (h.command || '').match(/\.cursor\/hooks\/(\S+)/)?.[1])
+      .filter(Boolean),
+  );
+  for (const f of manifest?.files || []) {
+    const m = f.path.match(/^\.cursor\/hooks\/(\S+)$/);
+    if (m) kitScriptNames.add(m[1]);
+  }
+  const isKitEntry = (entry) => {
+    const script = (entry?.command || '').match(/\.cursor\/hooks\/(\S+)/)?.[1];
+    return script ? kitScriptNames.has(script) : false;
+  };
+
+  let changed = false;
+  const merged = { ...userCfg.hooks };
+  for (const [event, kitEntries] of Object.entries(kitCfg.hooks)) {
+    const userEntries = Array.isArray(userCfg.hooks[event]) ? userCfg.hooks[event] : [];
+    const userOnly = userEntries.filter((e) => !isKitEntry(e));
+    const next = [...kitEntries, ...userOnly];
+    if (JSON.stringify(next) !== JSON.stringify(userEntries)) changed = true;
+    merged[event] = next;
+  }
+  // events the kit no longer wires keep whatever the user has — never delete user config
+  if (!changed) return;
+
+  await fs.writeJson(dest, { ...userCfg, hooks: merged }, { spaces: 2 });
+  updated.push(relPath);
 }
 
 async function copyRuleProtected(src, dest, relPath, manifest, created, updated, mergeNeeded) {
