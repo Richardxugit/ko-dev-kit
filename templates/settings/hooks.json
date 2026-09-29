@@ -13,6 +13,9 @@
     ],
     "beforeMCPExecution": [
       { "command": "node .cursor/hooks/privacy-block.cjs" }
+    ],
+    "postToolUse": [
+      { "command": "node .cursor/hooks/edit-lint.cjs", "matcher": "Write", "timeout": 10 }
     ]
   }
 }

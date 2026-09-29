@@ -275,9 +275,11 @@ with your existing rules.
 - **Hooks**: `privacy-block` denies reads/shell/MCP/Tab reads touching likely-secret files;
   `safety-guard` denies destructive shell commands (force push without lease, `reset --hard`,
   `clean -f`, `checkout --`, broad `rm -rf`, local `npm/pnpm/yarn publish`) and names the safe
-  alternative. `hooks.json` is user-protected: existing repos upgrading from a version with only
-  the privacy hook must merge the new entries manually (or delete `.cursor/hooks.json` and re-run
-  `ko-dev-kit init`) — the scripts themselves are copied on init as usual.
+  alternative. `edit-lint` runs on `postToolUse` (matcher `Write`): after the agent edits a
+  TS/JS file it lints just that file with the project's own eslint and feeds errors back as
+  `additional_context` — per-file cooldown, errors only, silent when the project has no eslint.
+  `hooks.json` is user-protected: existing repos upgrading must merge new entries manually (or
+  delete `.cursor/hooks.json` and re-run `ko-dev-kit init`) — the scripts are copied as usual.
 
 ## Develop
 
