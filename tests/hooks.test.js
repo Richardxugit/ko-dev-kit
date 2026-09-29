@@ -154,6 +154,16 @@ describe('grep-negative.cjs', () => {
     expect(decision.additional_context).toBeUndefined();
   });
 
+  it('reads Cursor tool_output: empty JSON result nudges', () => {
+    const decision = run({ tool_name: 'Grep', tool_input: { pattern: 'foo' }, tool_output: '{"pattern":"foo","success":true}' });
+    expect(decision.additional_context).toContain('grep-negative:');
+  });
+
+  it('reads Cursor tool_output: a populated matches array stays silent', () => {
+    const decision = run({ tool_name: 'Grep', tool_input: { pattern: 'foo' }, tool_output: '{"matches":["src/a.ts:12: foo();"],"success":true}' });
+    expect(decision.additional_context).toBeUndefined();
+  });
+
   it('stays silent when the response field is absent (cannot establish emptiness)', () => {
     const decision = run({ tool_name: 'Grep', tool_input: { pattern: 'foo' } });
     expect(decision.additional_context).toBeUndefined();

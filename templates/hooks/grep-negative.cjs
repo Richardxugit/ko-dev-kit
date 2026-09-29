@@ -15,15 +15,22 @@
 //
 // Contract: JSON event on stdin, JSON on stdout, exit 0. This hook only adds
 // context; it can never block. Every failure path is silent.
+//
+// Cursor's postToolUse payload carries the result as `tool_output` (a string,
+// often itself JSON like {"pattern":"…","success":true}); Claude Code uses
+// `tool_response`. Read both. When neither is present we cannot establish
+// emptiness, so we stay silent rather than nag on every search.
 
 const EMPTY_MARKERS = ['No matches found', 'No files found', 'Found 0 '];
+const RESULT_KEYS = ['matches', 'files', 'results', 'lines', 'content', 'text', 'output'];
 
 const finish = (obj) => {
   process.stdout.write(JSON.stringify(obj || {}));
   process.exit(0);
 };
 
-const responseText = (response) => {
+const responseText = (input) => {
+  const response = input.tool_output ?? input.tool_response;
   if (response == null) return null; // absent — not evidence of emptiness
   if (typeof response === 'string') return response;
   try { return JSON.stringify(response); } catch { return null; }
@@ -32,7 +39,21 @@ const responseText = (response) => {
 const isEmptyResult = (text) => {
   const trimmed = text.trim();
   if (!trimmed || trimmed === '{}' || trimmed === '[]' || trimmed === '""') return true;
-  return EMPTY_MARKERS.some((m) => trimmed.includes(m));
+  if (EMPTY_MARKERS.some((m) => trimmed.includes(m))) return true;
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed.length === 0;
+      // an object carrying no recognizable non-empty result payload = no matches
+      for (const key of RESULT_KEYS) {
+        const v = parsed[key];
+        if (Array.isArray(v) && v.length > 0) return false;
+        if (typeof v === 'string' && v.trim()) return false;
+      }
+      return true;
+    } catch { /* not JSON — fall through */ }
+  }
+  return false;
 };
 
 const wasCaseInsensitive = (ti) =>
@@ -55,7 +76,7 @@ function main(input) {
   const ti = input.tool_input && typeof input.tool_input === 'object' ? input.tool_input : {};
   if (wasCaseInsensitive(ti)) return finish({});
 
-  const text = responseText(input.tool_response);
+  const text = responseText(input);
   if (text === null || !isEmptyResult(text)) return finish({});
 
   const pattern = String(ti.pattern || '').slice(0, 80);
