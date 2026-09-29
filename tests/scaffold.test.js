@@ -33,7 +33,10 @@ describe('scaffoldProject', () => {
 
   it('overwrites an unmodified rule (hash matches manifest)', async () => {
     await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
-    const RULES = ['.cursor/rules/coding-standards.mdc', '.cursor/rules/fe-nx.mdc'];
+    // Manifest must cover every merge-protected file the scaffold installs
+    // (rules + hook policy JSON) — a file with no manifest entry reads as
+    // user-modified by design.
+    const RULES = ['.cursor/rules/coding-standards.mdc', '.cursor/rules/fe-nx.mdc', '.cursor/hooks/destructive-rules.json'];
     const first = await writeManifest(tmpDir, MANIFEST, { kitVersion: '0.0.0', archetypes: ['fe-nx'], files: RULES });
     const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir, { manifest: first });
     expect(result.updated).toContain('.cursor/rules/coding-standards.mdc');
@@ -67,6 +70,38 @@ describe('scaffoldProject', () => {
     const result = await pruneProject(tmpDir, ['nestjs-graphql', 'fe-nx'], templateDir);
     expect(result.removed).toContain('.cursor/rules/design-system.mdc');
     expect(await fs.pathExists(path.join(tmpDir, '.cursor/rules/coding-standards.mdc'))).toBe(true);
+  });
+
+  it('installs hook scripts AND the hook policy data file', async () => {
+    await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    expect(await fs.pathExists(path.join(tmpDir, '.cursor/hooks/safety-guard.cjs'))).toBe(true);
+    expect(await fs.pathExists(path.join(tmpDir, '.cursor/hooks/grep-negative.cjs'))).toBe(true);
+    expect(await fs.pathExists(path.join(tmpDir, '.cursor/hooks/destructive-rules.json'))).toBe(true);
+  });
+
+  it('hook policy JSON is merge-protected like a rule (team-editable)', async () => {
+    await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    const POLICY = '.cursor/hooks/destructive-rules.json';
+    const manifest = await writeManifest(tmpDir, MANIFEST, { kitVersion: '0.0.0', archetypes: ['fe-nx'], files: [POLICY] });
+    const policyPath = path.join(tmpDir, POLICY);
+    const policy = await fs.readJson(policyPath);
+    policy.safeDeleteTargets.push('our-build-out');
+    await fs.writeJson(policyPath, policy, { spaces: 2 });
+    const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir, { manifest });
+    expect(result.mergeNeeded).toContain(POLICY);
+    expect((await fs.readJson(policyPath)).safeDeleteTargets).toContain('our-build-out');
+    expect(await fs.pathExists(`${policyPath}.kit-update`)).toBe(true);
+  });
+
+  it('hook scripts (.cjs) stay kit-managed: overwritten on re-scaffold', async () => {
+    await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
+    const GUARD = '.cursor/hooks/safety-guard.cjs';
+    const manifest = await writeManifest(tmpDir, MANIFEST, { kitVersion: '0.0.0', archetypes: ['fe-nx'], files: [GUARD] });
+    const guardPath = path.join(tmpDir, GUARD);
+    await fs.appendFile(guardPath, '// local tweak\n');
+    const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir, { manifest });
+    expect(result.updated).toContain(GUARD);
+    expect(await fs.readFile(guardPath, 'utf-8')).not.toContain('local tweak');
   });
 
   it('multi-archetype repos get the UNION of recommended mcp servers', async () => {

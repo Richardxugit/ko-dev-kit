@@ -137,7 +137,7 @@ Use it directly (`~/.cursor/plugins/local/<name>`) or push it to any Git repo an
 | Subagents | `.cursor/agents/*.md` | kit-managed |
 | Rules | `.cursor/rules/*.mdc` | merge-protected (see below) |
 | Project context | root `AGENTS.md` | user-protected |
-| Hooks | `.cursor/hooks/privacy-block.cjs` + `safety-guard.cjs` + `.cursor/hooks.json` | scripts kit-managed; `hooks.json` user-protected |
+| Hooks | `.cursor/hooks/*.cjs` + `destructive-rules.json` + `.cursor/hooks.json` | scripts kit-managed; policy JSON merge-protected; `hooks.json` user-protected |
 | MCP servers | `.cursor/mcp.json` | user-protected |
 | CLI permissions | `.cursor/cli.json` | user-protected |
 
@@ -156,7 +156,7 @@ merge manually, then delete the `.kit-update` file.
 - commands: `ko-onboard`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-verify`
 - commands (all except design-system): `ko-feature`, `ko-spike`, `ko-implement`
 - agents: `code-reviewer`, `review-specialist`
-- hooks: `privacy-block`, `safety-guard`; settings: `cli.json` (`.cursor/mcp.json` is generated per archetype set — union of recommended servers)
+- hooks: `privacy-block`, `safety-guard` (+ `destructive-rules.json` policy), `grep-negative`; settings: `cli.json` (`.cursor/mcp.json` is generated per archetype set — union of recommended servers)
 
 | Archetype | rule | skills | commands | agent |
 |---|---|---|---|---|
@@ -273,13 +273,22 @@ with your existing rules.
 - **Rules** apply automatically: `coding-standards.mdc` is always on; the archetype rule attaches
   by its `globs`. `AGENTS.md` is loaded by Cursor as project context.
 - **Hooks**: `privacy-block` denies reads/shell/MCP/Tab reads touching likely-secret files;
-  `safety-guard` denies destructive shell commands (force push without lease, `reset --hard`,
-  `clean -f`, `checkout --`, broad `rm -rf`, local `npm/pnpm/yarn publish`) and names the safe
-  alternative. `edit-lint` runs on `postToolUse` (matcher `Write`): after the agent edits a
+  `safety-guard` guards destructive shell commands — **what** it blocks is policy and lives in
+  `.cursor/hooks/destructive-rules.json` (merge-protected, team-editable, no JS required): `deny`
+  rules hard-block with the safe alternative named (force push without lease, `reset --hard`,
+  `clean -f`, `checkout --`, broad `rm -rf`, local publish, sudo deletes, raw-device writes,
+  `chmod 777`, `curl|sh`, history rewrites), `ask` rules prompt instead (`--force-with-lease`).
+  `rm -rf` is exempt when every target's basename is in `safeDeleteTargets` (node_modules, dist,
+  coverage, …) — a guard that false-positives routine work gets switched off.
+  `grep-negative` runs on `postToolUse` (matcher `Grep`): when a case-sensitive search returns
+  nothing, it reminds the agent that the literal being absent is not the concept being absent —
+  re-run case-insensitively with codebase variants before asserting absence.
+  `edit-lint` runs on `postToolUse` (matcher `Write`): after the agent edits a
   TS/JS file it lints just that file with the project's own eslint and feeds errors back as
   `additional_context` — per-file cooldown, errors only, silent when the project has no eslint.
   `hooks.json` is user-protected: existing repos upgrading must merge new entries manually (or
   delete `.cursor/hooks.json` and re-run `ko-dev-kit init`) — the scripts are copied as usual.
+  This release adds the `grep-negative` wiring, so pre-existing installs need that merge.
 
 ## Develop
 
@@ -308,7 +317,7 @@ ko-dev-kit/
 │   ├── agents/           # Subagent definitions (5 agents)
 │   ├── project-context/  # AGENTS.md templates per archetype (3 files)
 │   ├── commands/         # Slash command definitions (18 commands)
-│   ├── hooks/            # Hook scripts (privacy + safety)
+│   ├── hooks/            # Hook scripts (.cjs) + hook policy data (destructive-rules.json)
 │   ├── rules/            # .mdc rule files (4 rules)
 │   ├── settings/         # CLI permissions + MCP config
 │   └── skills/           # Skill definitions (15 skills)

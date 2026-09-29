@@ -79,16 +79,20 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
 
   const hooksSrc = path.join(templateDir, 'hooks');
   if (await fs.pathExists(hooksSrc)) {
-    const hookFiles = (await fs.readdir(hooksSrc)).filter(f => f.endsWith('.cjs'));
+    // .cjs = hook scripts (kit-managed, overwritten). .json = hook policy data
+    // (team-editable, merge-protected like rules — e.g. destructive-rules.json).
+    const hookFiles = (await fs.readdir(hooksSrc)).filter(f => f.endsWith('.cjs') || f.endsWith('.json'));
     for (const file of hookFiles) {
       const src = path.join(hooksSrc, file);
       const dest = path.join(projectDir, '.cursor', 'hooks', file);
       const relPath = path.join('.cursor', 'hooks', file);
       owned.push(relPath);
-      if (overwrite) {
-        await copyOverwrite(src, dest, relPath, created, updated);
-      } else {
+      if (!overwrite) {
         await copyIfNotExists(src, dest, relPath, created, skipped);
+      } else if (file.endsWith('.json')) {
+        await copyRuleProtected(src, dest, relPath, manifest, created, updated, mergeNeeded);
+      } else {
+        await copyOverwrite(src, dest, relPath, created, updated);
       }
     }
   }
@@ -267,6 +271,16 @@ export async function installResource(projectDir, type, name, templateDir, optio
       await copyOverwrite(src, dest, relPath, created, updated);
     } else {
       await copyIfNotExists(src, dest, relPath, created, skipped);
+    }
+    // Hook policy companions (*.json next to the scripts) travel with every
+    // hook install — a guard without its policy file lands inert. Policies are
+    // team-editable, so single-resource installs never clobber an existing one.
+    const policyFiles = (await fs.readdir(path.join(templateDir, 'hooks')))
+      .filter(f => f.endsWith('.json'));
+    for (const file of policyFiles) {
+      const pSrc = path.join(templateDir, 'hooks', file);
+      const pDest = path.join(projectDir, '.cursor', 'hooks', file);
+      await copyIfNotExists(pSrc, pDest, path.join('.cursor', 'hooks', file), created, skipped);
     }
     return { created, updated, skipped };
   }

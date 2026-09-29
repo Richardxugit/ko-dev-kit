@@ -4,47 +4,62 @@
 // alternative so the agent can recover on its own.
 // Wired in .cursor/hooks.json to: beforeShellExecution.
 //
+// WHAT TO BLOCK IS POLICY, AND POLICY LIVES IN DATA — destructive-rules.json
+// next to this script. Teams edit the JSON; this file only detects. The
+// deny/ask split is deliberate: a guard that hard-blocks routine work gets
+// switched off, and a switched-off guard protects nothing.
+//
 // Cursor hook contract: receives a JSON event on stdin, writes a JSON decision
-// on stdout, exits 0. A "deny" decision blocks the action; anything else allows it.
+// on stdout, exits 0. "deny" blocks, "ask" prompts the user, anything else
+// allows. Fails OPEN (with a warning) when the policy file is missing — an
+// inert guard must announce itself, not silently stop protecting.
 
-// [pattern, why it's blocked, safe alternative]
-const RULES = [
-  [
-    /\bgit\s+push\b[^|;&]*\s--force\b(?!\-with\-lease)/,
-    'force push rewrites remote history',
-    'use --force-with-lease if a force push is truly intended',
-  ],
-  [
-    /\bgit\s+push\b[^|;&]*\s-f\b/,
-    'force push rewrites remote history',
-    'use --force-with-lease if a force push is truly intended',
-  ],
-  [
-    /\bgit\s+reset\s+--hard\b/,
-    'reset --hard discards uncommitted work irreversibly',
-    'git stash (or commit to a scratch branch) keeps the work recoverable',
-  ],
-  [
-    /\bgit\s+clean\s+-[a-zA-Z]*f/,
-    'git clean -f deletes untracked files irreversibly',
-    'git stash -u, or list targets first with git clean -n',
-  ],
-  [
-    /\bgit\s+checkout\s+--/,
-    'checkout -- discards uncommitted changes irreversibly',
-    'git stash keeps the work recoverable',
-  ],
-  [
-    /\brm\s+-[a-zA-Z]*r[a-zA-Z]*f[^|;&]*(\s\/\s*$|\s~|\s\$HOME|\s\.\s*$|\s\*\s*$)/,
-    'rm -rf against a broad target can wipe the workspace',
-    'delete a specific subdirectory, and prefer moving to /tmp over deleting',
-  ],
-  [
-    /\b(npm|pnpm|yarn)\s+publish\b/,
-    'publishing from a local shell bypasses release checks',
-    'publish via the repo release workflow / CI',
-  ],
-];
+const fs = require('node:fs');
+const path = require('node:path');
+
+const POLICY_PATH = path.join(__dirname, 'destructive-rules.json');
+
+const answer = (obj) => {
+  process.stdout.write(JSON.stringify(obj));
+  process.exit(0);
+};
+
+const loadPolicy = () => {
+  try {
+    return JSON.parse(fs.readFileSync(POLICY_PATH, 'utf-8'));
+  } catch {
+    return null;
+  }
+};
+
+// For exemptWhenSafeDelete rules: extract every path target of each matched
+// `rm -rf ...` invocation (up to the next shell separator) and require every
+// basename to be in safeDeleteTargets. One unsafe target poisons the command.
+const allTargetsSafe = (cmd, safeDeleteTargets) => {
+  const safe = new Set(safeDeleteTargets || []);
+  const tails = [...cmd.matchAll(/\brm\s+-[a-zA-Z]*r[a-zA-Z]*f([^;&|]*)/gi)];
+  if (tails.length === 0) return false;
+  for (const m of tails) {
+    const targets = m[1].split(/\s+/).filter((t) => t && !t.startsWith('-'));
+    if (targets.length === 0) return false; // `rm -rf` with no visible target — not provably safe
+    for (const t of targets) {
+      const base = t.replace(/\/+$/, '').split('/').pop();
+      if (!safe.has(base)) return false;
+    }
+  }
+  return true;
+};
+
+let policy = null;
+let rules = [];
+try {
+  policy = loadPolicy();
+  if (policy && Array.isArray(policy.rules)) {
+    rules = policy.rules.map((r) => ({ ...r, re: new RegExp(r.pattern, r.flags || 'i') }));
+  }
+} catch {
+  rules = []; // corrupt policy → inert, announced below
+}
 
 let raw = '';
 process.stdin.setEncoding('utf-8');
@@ -53,21 +68,47 @@ process.stdin.on('end', () => {
   let input = {};
   try { input = JSON.parse(raw || '{}'); } catch { /* allow on unparseable input */ }
 
+  if (!policy || rules.length === 0) {
+    answer({
+      permission: 'allow',
+      userMessage: 'ko-dev-kit safety hook: destructive-rules.json is missing or unreadable — the guard is INERT. Re-run `ko-dev-kit init` to restore it.',
+    });
+    return;
+  }
+
   const ti = input.tool_input || input.toolInput || {};
   const command = input.command ?? ti.command;
   const cmd = command == null ? '' : String(command);
-
-  const hit = cmd ? RULES.find(([re]) => re.test(cmd)) : null;
-
-  if (hit) {
-    process.stdout.write(JSON.stringify({
-      permission: 'deny',
-      userMessage: `Blocked by ko-dev-kit safety hook: "${cmd}" — ${hit[1]}.`,
-      agentMessage: `The command "${cmd}" was denied by the safety hook (${hit[1]}). ${hit[2]}. If the user explicitly asked for this exact operation, stop and let them run it themselves.`,
-    }));
-    process.exit(0);
+  if (!cmd) {
+    answer({ permission: 'allow' });
+    return;
   }
 
-  process.stdout.write(JSON.stringify({ permission: 'allow' }));
-  process.exit(0);
+  // deny beats ask: evaluate every matching deny rule before any ask.
+  const hits = rules.filter((r) => {
+    if (!r.re.test(cmd)) return false;
+    if (r.exemptWhenSafeDelete && allTargetsSafe(cmd, policy.safeDeleteTargets)) return false;
+    return true;
+  });
+  const hit = hits.find((r) => r.action === 'deny') || hits.find((r) => r.action === 'ask');
+
+  if (!hit) {
+    answer({ permission: 'allow' });
+    return;
+  }
+
+  if (hit.action === 'ask') {
+    answer({
+      permission: 'ask',
+      userMessage: `ko-dev-kit safety hook asks before running: "${cmd}" — ${hit.reason}.`,
+      agentMessage: `The command "${cmd}" requires user confirmation (${hit.reason}). ${hit.alternative || 'Proceed only once the user confirms'}.`,
+    });
+    return;
+  }
+
+  answer({
+    permission: 'deny',
+    userMessage: `Blocked by ko-dev-kit safety hook: "${cmd}" — ${hit.reason}.`,
+    agentMessage: `The command "${cmd}" was denied by the safety hook (${hit.reason}). ${hit.alternative}. If the user explicitly asked for this exact operation, stop and let them run it themselves.`,
+  });
 });
