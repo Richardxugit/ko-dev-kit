@@ -54,13 +54,10 @@ ko-dev-kit export <command-name> [-o dir] [--plugin]   # export a command + depe
 ko-dev-kit export-plugin [-n name] [-c cmd,cmd] [-d desc]   # mint a custom Cursor plugin from chosen commands
 ```
 
-There is no `--with-product` or `--with-design` flag here — those audiences are retired from this
-kit and now install `ko-product-kit` directly at user scope.
-
 `init` records what it installed in `.cursor/.ko-dev-kit-manifest.json` (kit version, archetype,
 file hashes). Re-running `init` uses it to remove files an older kit version shipped that the
 current one no longer does — unmodified files only; anything you've edited is kept and reported.
-If another installed kit (e.g. `ko-qa-kit`) still claims a shared file, it's kept regardless.
+If another installed kit still claims a shared file, it's kept regardless.
 
 Then open the repo in **Cursor**. After scaffolding, run `/ko-onboard` in Cursor to fill the
 `AGENTS.md` placeholders with the repo's real commands and conventions.
@@ -338,8 +335,3 @@ ko-dev-kit/
 ├── package.json
 └── README.md
 ```
-
-## Looking for other roles?
-
-- QA (`e2e-playwright`, `mobile-appium`) — see [`../ko-qa-kit`](../ko-qa-kit).
-- Product/BA and design commands — see [`../ko-product-kit`](../ko-product-kit).
