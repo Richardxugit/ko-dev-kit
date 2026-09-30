@@ -202,6 +202,9 @@ describe('privacy-block.cjs (regression — wired to one more event)', () => {
     'git diff config/.env.sample',
     'cat .env.template',
     'cat .env.dist',
+    'cat .env-sample', // hyphenated example variant
+    'cat .envrc', // direnv config — \b must not reach across 'env'
+    'cat .envelope', // word char after .env — not an env file
   ];
   for (const command of allowedExamples) {
     it(`allows example env in command: ${command}`, () => {
@@ -223,6 +226,8 @@ describe('privacy-block.cjs (regression — wired to one more event)', () => {
     'cat .env.production',
     'cat .env.example && cat .env',
     'cp .env.example .env && cat .env',
+    'cat .env | grep DATABASE_URL', // pipe bypass — \b closes it
+    'grep KEY .env && echo done',
   ];
   for (const command of stillDenied) {
     it(`still denies real env access: ${command}`, () => {
