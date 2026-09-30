@@ -231,6 +231,17 @@ describe('anti-overengineering rules', () => {
     expect(content).toContain('BugBot');
   });
 
+  it('ko-review wires --guide to its workflow-refs reference', () => {
+    const cmd = fs.readFileSync(path.join(templateDir, 'commands', 'ko-review.md'), 'utf-8');
+    expect(cmd).toContain('--guide');
+    expect(cmd).toContain('workflow-refs/references/review-guide-mode.md');
+    const ref = fs.readFileSync(
+      path.join(templateDir, 'skills', 'workflow-refs', 'references', 'review-guide-mode.md'), 'utf-8');
+    expect(ref).toContain('never fan out sub-agents'); // guiding is a single co-pilot
+    expect(ref).toContain('Your call'); // every station hands the user one question
+    expect(ref).toContain('flag'); // user findings are first-class
+  });
+
   it('ko-explain: context inference before asking, no flag surface, default tier', () => {
     const cmd = fs.readFileSync(path.join(templateDir, 'commands', 'ko-explain.md'), 'utf-8');
     // target resolution order: args -> session context -> ask
