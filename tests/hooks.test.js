@@ -193,6 +193,43 @@ describe('privacy-block.cjs (regression — wired to one more event)', () => {
     const decision = runHook('privacy-block.cjs', { file_path: '/repo/src/app.ts' });
     expect(decision.permission).toBe('allow');
   });
+
+  // Example/template env files are committed placeholders — the hook scrubs
+  // them from candidates instead of blocking. (git diff .env.example is a
+  // routine inspection, not a secret leak.)
+  const allowedExamples = [
+    'git diff .env.example',
+    'git diff config/.env.sample',
+    'cat .env.template',
+    'cat .env.dist',
+  ];
+  for (const command of allowedExamples) {
+    it(`allows example env in command: ${command}`, () => {
+      const decision = runHook('privacy-block.cjs', { tool_input: { command } });
+      expect(decision.permission).toBe('allow');
+    });
+  }
+
+  it('allows an example env file path', () => {
+    const decision = runHook('privacy-block.cjs', { file_path: '/repo/.env.example' });
+    expect(decision.permission).toBe('allow');
+  });
+
+  // Real env files stay blocked even when an allow-listed example appears in
+  // the same command — scrubbing must not become a veto smuggle path.
+  const stillDenied = [
+    'git diff .env',
+    'cat .env.local',
+    'cat .env.production',
+    'cat .env.example && cat .env',
+    'cp .env.example .env && cat .env',
+  ];
+  for (const command of stillDenied) {
+    it(`still denies real env access: ${command}`, () => {
+      const decision = runHook('privacy-block.cjs', { tool_input: { command } });
+      expect(decision.permission).toBe('deny');
+    });
+  }
 });
 
 describe('edit-lint.cjs', () => {
