@@ -18,12 +18,7 @@ Used by the `--fast` feature profile or on request. Run only: Step 1 (scope), St
 
 ## Step 1: Detect Archetype and Scope
 
-1. List `.cursor/rules/` to detect archetype:
-   - `nestjs-graphql.mdc` → **nestjs-graphql**
-   - `fe-nx.mdc` → **fe-nx**
-   - `e2e-playwright.mdc` → **e2e-playwright** (if installed — shipped by ko-qa-kit, not this kit)
-   - `design-system.mdc` → **design-system**
-   - None → **generic**
+1. List `.cursor/rules/`: `nestjs-graphql.mdc` → nestjs-graphql · `fe-nx.mdc` → fe-nx · `e2e-playwright.mdc` → e2e-playwright (if installed — ko-qa-kit, not this kit) · `design-system.mdc` → design-system · none → generic.
 
 2. Determine what to verify:
    - If specs exist in `.cursor/specs/`, list files with unchecked items. If multiple, ask the user to pick. If one, use it.
@@ -42,11 +37,11 @@ Read `.cursor/env-recipe.md` if present (written by the `env-preflight` skill) a
 
 | Capability | Detect via | If absent |
 |------------|-----------|-----------|
-| Lint | `scripts.lint` or an `nx` lint target | Gate = **N/A — not configured in this repo** |
+| Lint | `scripts.lint` / nx lint target | N/A — not configured |
 | Type check | `tsconfig.json` present | N/A |
-| Build | `scripts.build` or `nx` build target | N/A |
-| Unit tests | `scripts.test` / jest / vitest | N/A (flag as repo-health: no test runner) |
-| axe a11y | `jest-axe` / `vitest-axe` / `@axe-core/*` in devDeps | N/A (flag as repo-health: add jest-axe) |
+| Build | `scripts.build` / nx build target | N/A |
+| Unit tests | `scripts.test` / jest / vitest | N/A (repo-health: no test runner) |
+| axe a11y | `jest-axe` / `vitest-axe` / `@axe-core/*` in devDeps | N/A (repo-health: add jest-axe) |
 | Storybook | `.storybook/` or `@storybook/*` | N/A |
 | Playwright | `@playwright/test` in devDeps | N/A (e2e gate skipped) |
 
@@ -67,7 +62,7 @@ Run the project's lint, type-check, and build commands (per the capability matri
 
 In an Nx repo: `pnpm nx affected -t lint typecheck build`. Otherwise run the `package.json` scripts (`lint`, `tsc --noEmit`, `build`). Gates with no backing tooling are `N/A`, not run.
 
-Report any failures, then apply the Step 1.5 baseline: failures that also occur on the base branch are `PRE-EXISTING` (Repo Health), not feature blockers. Only failures introduced by this work are blocking — they should be fixed before tests can be trusted.
+Apply the Step 1.5 baseline to any failures — only failures introduced by this work are blocking; they must be fixed before tests can be trusted.
 
 ## Step 3: Test Coverage Verification
 
@@ -144,4 +139,4 @@ Only **introduced** failures count against the feature. `N/A` gates and `PRE-EXI
 
 **Unit-of-work bolt log:** if the verified work belongs to a unit (`.cursor/specs/*/stories.md` — only when the `unit-of-work` skill is installed, shipped by ko-product-kit), append a bolt-log row (`verify` / `/ko-verify` / gate outcome summary, e.g. "all gates pass" or "2 introduced failures"). Append-only — never edit prior rows.
 
-The recommendation cannot be "Ready for code review" if browser verification is FAIL or SKIPPED-without-a-runner on a UI archetype — even if all other checks pass. Finish by suggesting `/ko-review` on the diff.
+Finish by suggesting `/ko-review` on the diff.
