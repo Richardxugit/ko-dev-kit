@@ -6,6 +6,8 @@ args: "[topic]"
 
 # Generate Knowledge Base
 
+> For a quick, visual answer in chat instead of persisted docs, use `/ko-explain` — this command is for building the durable knowledge base.
+
 Two modes:
 - **Full repo** (`/ko-knowledge-gen`) — generate all topic-scoped documents for the entire codebase
 - **Focused topic** (`/ko-knowledge-gen <topic>`) — generate ONE deep-dive document tracing a specific flow, feature, or integration

@@ -201,6 +201,7 @@ bug pass on top — `/ko-review` reads its comments and dedupes against them.
 | `/ko-fix-review` | Address review feedback — syncs kit findings + human + BugBot comments into one file, fixes each with regression tests. Run in a fresh session |
 | `/ko-verify` | Run build/lint/tests and confirm they pass |
 | `/ko-pr-desc` | Generate PR title and description from diff + branch name |
+| `/ko-explain` | Explain a feature/flow/API or a finished change (PR/branch/range) — visual chat answer with mermaid diagrams + file:line citations; target inferred from args or session context, asks when both are absent |
 
 ### Shared commands (`fe-nx` / `nestjs-graphql` only)
 | Command | Purpose |
