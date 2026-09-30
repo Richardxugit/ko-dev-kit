@@ -101,7 +101,7 @@ Tell the user: artifacts and design constraints (Step 0); archetype and key conv
 
 Invoke `superpowers:brainstorming` with the loaded context — it guides requirements → design → spec; the spec is saved to `.cursor/specs/`.
 
-**Spec style is enforced:** plain English, no filler; structure over prose (tables for options, Mermaid for flows/state); answers what-problem / what-decision / how-to-verify — everything else is appendix or cut. Acceptance criteria (observable behaviors) **only** — no test-scenario enumeration or test code; those live in the plan (Step 2b-2) and TDD execution. If the spec needs scrolling, compress it before approval — it is re-fed as context in every later step; size is a cost multiplier.
+**Spec style is enforced:** plain English, no filler; structure over prose (tables for options, Mermaid for flows/state); answers what-problem / what-decision / how-to-verify — everything else is appendix or cut. Acceptance criteria follow `.cursor/skills/workflow-refs/references/spec-ac-contract.md` (`AC-n` ids, one observable behavior each — no test code). If the spec needs scrolling, compress it before approval — it is re-fed as context in every later step; size is a cost multiplier.
 
 *Fallback (no superpowers):* restate the goal in one sentence, ask scoping questions (don't over-ask), write the spec yourself to `.cursor/specs/`.
 

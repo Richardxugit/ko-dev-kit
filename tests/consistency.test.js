@@ -273,6 +273,21 @@ describe('anti-overengineering rules', () => {
     const content = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
     expect(content).toContain('### `simplicity`');
   });
+
+  it('spec AC contract: feature cites it, review traces per AC id', () => {
+    const feature = fs.readFileSync(path.join(templateDir, 'commands', 'ko-feature.md'), 'utf-8');
+    expect(feature).toContain('spec-ac-contract.md');
+    const contract = fs.readFileSync(
+      path.join(templateDir, 'skills', 'workflow-refs', 'references', 'spec-ac-contract.md'), 'utf-8');
+    expect(contract).toContain('## Acceptance Criteria'); // the fixed heading anchor
+    expect(contract).toContain('AC-n'); // stable ids
+    expect(contract).toContain('never deleted'); // ids are struck through, not removed
+    for (const agent of ['code-reviewer.md', 'review-specialist.md']) {
+      const content = fs.readFileSync(path.join(templateDir, 'agents', agent), 'utf-8');
+      expect(content, `${agent} traces per AC id`).toContain('per AC');
+      expect(content, `${agent} treats a silently omitted AC as Blocking`).toContain('silently omitted AC is **Blocking**');
+    }
+  });
 });
 
 describe('cross-kit reference lint', () => {

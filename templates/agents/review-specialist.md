@@ -21,7 +21,7 @@ Follow the playbook for your assigned dimension. Ignore the others.
 
 ### `compliance`
 - Conformance to `.cursor/rules/` (baseline + archetype) and `AGENTS.md`: naming, structure, TypeScript strict, no `any`, no stray `console.log`/debug code.
-- **Spec traceability** — trace the diff against the spec's acceptance criteria / ticket intent: flag behavior that contradicts or silently omits a requirement.
+- **Spec traceability** — trace the diff against the spec's acceptance criteria / ticket intent. When the spec carries an `AC-n` block (per `spec-ac-contract.md`), trace **per AC**: for each AC-n, name the implementing diff hunk (`path:line`) or report it uncovered — a silently omitted AC is **Blocking**. Unnumbered ACs: trace at prose level, note the spec predates the contract.
 - **Convention fidelity** — declaration style (`const` arrow vs `function`) matches the repo; structure/placement follows existing modules; existing implementations reused. A different approach with no stated justification is a **Should-fix**.
 - Correctness: logic errors, unhandled edge cases, race conditions, off-by-one, incorrect async/await, missing or swallowed error handling.
 - Security hygiene: input validation at trust boundaries, no secrets or credentials in code, no credential-file access.
