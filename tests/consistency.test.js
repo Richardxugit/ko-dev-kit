@@ -244,6 +244,13 @@ describe('anti-overengineering rules', () => {
     // mermaid is the visual contract, file:line the evidence contract
     expect(cmd).toContain('mermaid');
     expect(cmd).toContain('file:line');
+    // plain-language contract: no filler, every file's job stated, big picture first
+    expect(cmd).toContain('Plain language');
+    expect(cmd).toContain('Every file gets its job stated');
+    expect(cmd).toContain('big picture comes first');
+    // oversized material is split into user-paced parts, not dumped
+    expect(cmd).toContain('Split, don\'t bloat');
+    expect(cmd).toContain('ask before each next part');
   });
 
   it('review-specialist has a simplicity playbook', () => {

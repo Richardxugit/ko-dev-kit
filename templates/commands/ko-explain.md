@@ -51,7 +51,11 @@ Resolve the target from the first source that yields one:
 ## Output contract (both modes)
 
 - Chat answer, not a file. If the user wants it persisted, they say so — then write it to `.cursor/knowledge-base/`.
-- ≤300 lines, ≤3 mermaid diagrams. Cut detail, keep the map. An explanation that needs 800 lines is a KB doc — recommend `/ko-knowledge-gen <topic>` instead (manual-tier, skip the suggestion if not installed).
+- **Plain language.** Write for a smart engineer who has never seen this repo: short sentences, concrete verbs, repo jargon and acronyms defined in parentheses on first use. No filler — if a sentence adds no information, delete it. Banned: "it is important to note", "delve", "leverage", "robust", "seamless", "plays a key/vital role", "in conclusion".
+- **Every file gets its job stated.** Any file referenced anywhere in the answer carries a one-line plain-English job description — what it does, phrased as its role in the flow (`auth.guard.ts:31 — rejects expired tokens before they reach the service`), never a restatement of its name.
+- **The big picture comes first.** Before the detailed flow, one mermaid flowchart showing where this feature/change sits in the system: entry layer → this module → its collaborators. The reader must see the architecture, not just the steps.
+- ≤300 lines, ≤3 mermaid diagrams **per part**. Cut detail, keep the map.
+- **Too big for one answer? Split, don't bloat.** When the material honestly exceeds the budget (multi-module feature, large PR), split into named parts along architecture lines — e.g. Part 1 big picture + module map, Part 2 core flow, Part 3 data shapes & error paths. Deliver Part 1 with the part list up front, then ask before each next part — the user steers the pace. Persisted splits (on request) land as separate files in `.cursor/knowledge-base/`. Only when the user wants a durable full reference rather than an explanation do you recommend `/ko-knowledge-gen <topic>` (manual-tier, skip the suggestion if not installed).
 - EVERY claim carries file:line. Unverifiable from source → mark `[NOT IN CODEBASE]`, never guess.
 - Mermaid renders in current Cursor chat. If the user says it renders as raw text on their version, generate a self-contained HTML file (mermaid via CDN) and `open` it — only on request.
 - No emojis. Factual tone.
