@@ -200,6 +200,11 @@ describe('anti-overengineering rules', () => {
     expect(ref).toContain('≤3 files'); // scope criterion
     expect(ref).toContain('design signals'); // ambiguity veto
     expect(ref).toContain('never silently switch'); // announce + override
+    // model pairing: fast pairs with a cheap chat model, standard keeps the strong
+    // one; subagent pins are never loosened to match the chat
+    expect(ref).toContain('Model pairing');
+    expect(ref).toContain('cheap chat model');
+    expect(ref).toContain('Never loosen');
   });
 
   it('ko-feature wires --pair to its workflow-refs reference', () => {
