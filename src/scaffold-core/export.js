@@ -179,8 +179,13 @@ async function writeMcpConfig(normalized, resourceMap, bundleDir, exported) {
   for (const archetype of owning) {
     for (const server of ARCHETYPE_MCP_SERVERS[archetype] ?? []) names.add(server);
   }
+  // Shared commands (unlisted in the resource map) contribute the servers EVERY
+  // archetype carries — the intersection, which may be empty (this kit's two
+  // archetypes share no server).
   if (names.size === 0 || normalized.some((cmd) => !(cmd in (resourceMap.commands ?? {})))) {
-    names.add('atlassian');
+    const sets = Object.values(ARCHETYPE_MCP_SERVERS);
+    const common = sets.length ? sets.reduce((a, b) => a.filter((s) => b.includes(s))) : [];
+    for (const s of common) names.add(s);
   }
   const mcpServers = {};
   for (const name of [...names].sort()) {
