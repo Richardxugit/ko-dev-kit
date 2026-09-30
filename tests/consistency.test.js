@@ -231,6 +231,21 @@ describe('anti-overengineering rules', () => {
     expect(content).toContain('BugBot');
   });
 
+  it('ko-explain: context inference before asking, no flag surface, default tier', () => {
+    const cmd = fs.readFileSync(path.join(templateDir, 'commands', 'ko-explain.md'), 'utf-8');
+    // target resolution order: args -> session context -> ask
+    expect(cmd).toContain('Session context');
+    expect(cmd.indexOf('Explicit args')).toBeLessThan(cmd.indexOf('Session context'));
+    expect(cmd.indexOf('Session context')).toBeLessThan(cmd.indexOf('ASK before spending'));
+    // no flags — the input alone determines the mode
+    expect(cmd).not.toMatch(/\[--[a-z]/);
+    // default tier: auto-installed, not SDLC periphery
+    expect(MANUAL_INSTALL_COMMANDS).not.toContain('ko-explain');
+    // mermaid is the visual contract, file:line the evidence contract
+    expect(cmd).toContain('mermaid');
+    expect(cmd).toContain('file:line');
+  });
+
   it('review-specialist has a simplicity playbook', () => {
     const content = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
     expect(content).toContain('### `simplicity`');
