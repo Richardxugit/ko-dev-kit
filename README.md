@@ -197,7 +197,7 @@ bug pass on top — `/ko-review` reads its comments and dedupes against them.
 | `/ko-onboard` | Explore repo, fill AGENTS.md placeholders with real values |
 | `/ko-bugfix` | Systematic debugging (reproduce → locate → fix → verify) |
 | `/ko-test` | Generate appropriate tests for a target file |
-| `/ko-review [--team]` | Review a change set — single pass by default; `--team` dispatches specialist reviewers (compliance, regression, simplicity, frontend, backend, tests) with a consolidated verdict |
+| `/ko-review [--team] [--guide]` | Review a change set — single pass by default; `--team` dispatches specialist reviewers (compliance, regression, simplicity, frontend, backend, tests) with a consolidated verdict; `--guide` walks you through the diff station by station with you holding the verdict |
 | `/ko-fix-review` | Address review feedback — syncs kit findings + human + BugBot comments into one file, fixes each with regression tests. Run in a fresh session |
 | `/ko-verify` | Run build/lint/tests and confirm they pass |
 | `/ko-pr-desc` | Generate PR title and description from diff + branch name |

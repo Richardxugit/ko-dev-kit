@@ -1,19 +1,20 @@
 ---
 name: ko-review
-description: Review a change set — single code-reviewer pass by default; --team dispatches specialist reviewers (compliance, regression, frontend, backend, tests, simplicity) in one round with a consolidated severity-ranked verdict
-args: "[PR number/URL, or several comma-separated] [--team]"
+description: Review a change set — single code-reviewer pass by default; --team dispatches specialist reviewers (compliance, regression, frontend, backend, tests, simplicity) in one round with a consolidated severity-ranked verdict; --guide walks you through the diff station by station with you holding the verdict
+args: "[PR number/URL, or several comma-separated] [--team] [--guide]"
 agents: [code-reviewer, review-specialist]
 skills-optional: [wcag-2.2-aa]
 ---
 
 # Review a change set
 
-Two depths of the same operation:
+Three depths of the same operation:
 
 - **`/ko-review`** (default) — one `code-reviewer` pass over the diff. Fast, cheap, right for the working diff.
 - **`/ko-review --team`** — dispatch a team of `review-specialist` sub-agents, one per dimension, consolidated severity-ranked verdict. Costs more tokens on purpose — the payoff is that one invocation surfaces every dimension's findings. Use before merging a real PR, or for a feature whose backend and frontend ship as separate PRs.
+- **`/ko-review --guide`** — guided review: the agent walks you through the diff station by station; you judge, it co-pilots. Use when YOU want to understand and decide, not just be told — big PRs from others, unfamiliar areas.
 
-**Choosing a mode:** no argument + a working diff → single pass. A PR URL/number, several PRs, or a diff over ~15 files → use `--team` (or suggest it to the user).
+**Choosing a mode:** no argument + a working diff → single pass. A PR URL/number, several PRs, or a diff over ~15 files → use `--team` (or suggest it to the user). The user asking to be walked through, or hesitating over a large/unfamiliar diff → suggest `--guide`.
 
 This command **reviews and reports — it never edits code and never posts to the PR.**
 
@@ -73,6 +74,16 @@ Give a verdict per PR and for the set as a whole:
 - **Do not merge** — any Blocking. A **regression** Blocking is decisive: the base gate is that the change must not break current behavior or introduce new issues.
 
 Write the consolidated review to `.cursor/specs/mr-reviews/<id>.md` per the reference **and** present it in chat.
+
+## Mode C: `--guide` — guided review (you hold the verdict)
+
+Same preflight and change-set resolution, then the agent walks you through the diff station by station — you judge, it co-pilots. The agent's role flips from finding issues for you to making you fast at judging: comprehension first, its own observations woven into stations as things to look at, not verdicts handed down.
+
+1. **Route** — one cheap orientation pass, then stations ordered contracts → orchestration → implementation → tests, with a one-line rationale. You may reorder or skip up front.
+2. **Stations** — each shows what changed (plain English, `path:line`), the file's one-line job, watch-points, and exactly ONE question for you to answer. You steer: `next`, ask anything (the route pauses, then resumes), `flag` (your finding, first-class), `wrap` (finish early).
+3. **Verdict** — your flags + the agent's observations merge into the same Ship / Ship with fixes / Do not merge block, written to `.cursor/specs/mr-reviews/<id>.md` and paste-ready. The verdict is yours; the agent advises, and dismissed findings are recorded, never relitigated.
+
+Station protocol, controls, interrupt/resume: `.cursor/skills/workflow-refs/references/review-guide-mode.md`. `--guide` is always a single co-pilot — never sub-agent fan-out; `--team --guide` runs the team first, then guides you through their findings mapped onto stations.
 
 ## Boundaries
 
