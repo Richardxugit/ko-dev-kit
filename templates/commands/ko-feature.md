@@ -23,10 +23,7 @@ Two profiles: **standard** (default) and **fast** (`/ko-feature <description> --
 | Review | Adversarial review sub-agent | One ~3-min self-review of the integration points only |
 | Verify | Full `/ko-verify` | `/ko-verify` scoped (type check + affected tests + summary) |
 
-**Fast-profile guardrails** — state these when fast is selected:
-- Only viable when the env runs clean and the KB is current; a cold repo blows the budget — fall back to standard.
-- Not for features needing genuine design exploration — forcing those into fast pays the time back in rework.
-- The skipped adversarial review is the main trade-off; the integration-point self-review is the safeguard that stays.
+**Fast-profile guardrails** — state these when fast is selected: env runs clean + KB current (a cold repo blows the budget — fall back to standard); no genuine design exploration (forcing it pays the savings back in rework); the skipped adversarial review is the main trade-off — the integration-point self-review is the safeguard that stays.
 
 **Pair mode** (`--pair`, combinable): execution becomes a step-by-step pair loop — brief before each task, approval gate at every checkpoint, user can take the keyboard anytime; inline only, never subagent-driven. Loop detail: `.cursor/skills/workflow-refs/references/feature-pair-mode.md`.
 
@@ -74,22 +71,11 @@ never introduces new ones.
 
 ## Step 2b-2: Convention-Derived Deliverables (mandatory)
 
-Conventions become **generated tasks in the plan's file list**, not prose the planner may forget. For every NEW component or module:
-
-- Add a co-located test file task (`*.test.tsx` / `*.spec.ts`) — always.
-- If `.storybook/` exists (or peers have `.stories.tsx`), add a stories task — even if the ticket's ACs don't mention it.
-
-"Don't add beyond what was requested" applies to **features**, not conventions — co-located tests and stories are part of "done" in repos that follow them.
+Conventions become **generated tasks in the plan's file list**, not prose the planner may forget. For every NEW component or module: always add a co-located test task (`*.test.tsx` / `*.spec.ts`); if `.storybook/` exists (or peers have `.stories.tsx`), add a stories task — even if the ticket's ACs don't mention it. "Don't add beyond what was requested" applies to **features**, not conventions — co-located tests and stories are part of "done" in repos that follow them.
 
 ## Step 2c: Load Knowledge Base (if available)
 
-If `.cursor/knowledge-base/` exists and contains `.md` files:
-1. List files, skim first lines for coverage
-2. Select the 1-3 most relevant to the feature
-3. **Always include the testing KB doc** (config, utilities, mocks) — TDD is the default, and topic-ranking alone misses it
-4. Read those docs for architectural context
-
-If the directory doesn't exist, skip this step.
+If `.cursor/knowledge-base/` exists and contains `.md` files: list them, pick the 1-3 most relevant — **always include the testing KB doc** (config, utilities, mocks); TDD is the default and topic-ranking alone misses it. Read them for architectural context. No directory → skip.
 
 ## Step 3: Summarize Context
 
@@ -101,7 +87,7 @@ Tell the user: artifacts and design constraints (Step 0); archetype and key conv
 
 Invoke `superpowers:brainstorming` with the loaded context — it guides requirements → design → spec; the spec is saved to `.cursor/specs/`.
 
-**Spec style is enforced:** plain English, no filler; structure over prose (tables for options, Mermaid for flows/state); answers what-problem / what-decision / how-to-verify — everything else is appendix or cut. Acceptance criteria follow `.cursor/skills/workflow-refs/references/spec-ac-contract.md` (`AC-n` ids, one observable behavior each — no test code). If the spec needs scrolling, compress it before approval — it is re-fed as context in every later step; size is a cost multiplier.
+**Spec style is enforced:** plain English, no filler; structure over prose (tables for options, Mermaid for flows/state); answers what-problem / what-decision / how-to-verify — everything else is appendix or cut. Acceptance criteria follow `.cursor/skills/workflow-refs/references/spec-ac-contract.md` (`AC-n` ids, one observable behavior each — no test code). Compress the spec before approval — it is re-fed as context in every later step.
 
 *Fallback (no superpowers):* restate the goal in one sentence, ask scoping questions (don't over-ask), write the spec yourself to `.cursor/specs/`.
 

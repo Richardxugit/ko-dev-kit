@@ -23,7 +23,7 @@ This command **reviews and reports — it never edits code and never posts to th
 One quick probe; this is user-triggered analysis, not a release gate, so a missing tool degrades the scope rather than blocking:
 
 - `gh auth status` — if green, `gh` may be used **read-only**: fetch a PR's diff and metadata, resolve the default branch, note failing CI checks as context. **Never** `gh pr create` / `edit` / `comment` / `review` — this command is output-only.
-- **BugBot evidence** — when reviewing a PR, also pull existing bot reviews: `gh api repos/{owner}/{repo}/pulls/<n>/comments` (inline) and `gh pr view <n> --comments` (summary), filtered to BugBot/Cursor-bot authors. Feed them to reviewers as prior findings. BugBot is good at logic-bug spotting in the diff; it cannot see spec compliance, simplicity, or blast radius — that is our lane. If no BugBot comments exist, mention one line: "BugBot not configured on this repo — worth enabling (Cursor → Automations)" and move on.
+- **BugBot evidence** — when reviewing a PR, pull existing bot reviews (`gh api repos/{owner}/{repo}/pulls/<n>/comments` inline + `gh pr view <n> --comments` summary, filtered to BugBot/Cursor-bot authors) and feed them to reviewers as prior findings. BugBot spots logic bugs in the diff; it cannot see spec compliance, simplicity, or blast radius — that is our lane. None found → one line ("BugBot not configured on this repo — worth enabling (Cursor → Automations)") and move on.
 - If `gh` is absent or unauthenticated, or the arg is not a PR: proceed on **local git only**, resolving the base branch by probing `origin/main` then `origin/master`.
 
 Print a one-line `✅/❌ gh` so the user knows which mode they're in.
@@ -52,12 +52,12 @@ Invoke **`superpowers:requesting-code-review`** to structure the review with ver
 
 | # | Dimension | Runs | Focus |
 |---|-----------|------|-------|
-| 1 | **compliance** | always | `.cursor/rules/` + `AGENTS.md` conformance; **spec traceability + convention fidelity** (declaration style, reuse-or-justify); correctness; secrets / input validation |
-| 2 | **regression** | always | **the base gate** — blast radius: callers/consumers of changed symbols, API/signature/schema/DTO changes, backward compatibility, migration safety, removed or renamed exports, behavior changes to shared code |
-| 3 | **simplicity** | always | what earns its place — unjustified code, speculative defensive code, premature abstraction, anything not traceable to the requirement |
-| 4 | **frontend** | FE files present | React/component patterns, state & props, the FE archetype rule, **WCAG 2.2 AA** accessibility |
-| 5 | **backend** | BE files present | resolver/API contracts, service/module boundaries, data access (N+1, transactions), auth, idempotency, the BE archetype rule |
-| 6 | **tests** | always | **would actually fail if broken**; mock discipline (out-of-process only); behavior assertions not implementation; deterministic/isolated; existing tests still protect changed paths |
+| 1 | **compliance** | always | `.cursor/rules/` + `AGENTS.md`; spec traceability (per `AC-n` when the spec carries them); convention fidelity; correctness; secrets / input validation |
+| 2 | **regression** | always | **the base gate** — blast radius: callers of changed symbols, API/signature/schema changes, backward compat, removed exports, shared-code behavior changes |
+| 3 | **simplicity** | always | unjustified code, speculative defense, premature abstraction, anything not traceable to the requirement |
+| 4 | **frontend** | FE files present | React/component patterns, state & props, FE archetype rule, **WCAG 2.2 AA** |
+| 5 | **backend** | BE files present | resolver/API contracts, module boundaries, data access (N+1, transactions), auth, idempotency, BE archetype rule |
+| 6 | **tests** | always | **would fail if broken**; mock discipline (out-of-process only); behavior assertions; deterministic/isolated; changed paths still protected |
 
 Dimensions 1, 2, 3, and 6 always run. Dimensions 4 and 5 run only when the diff touches files of that kind. Each runs as its own `review-specialist` sub-agent — the agent holds the full playbook for every dimension.
 
