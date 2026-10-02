@@ -184,9 +184,11 @@ describe('grep-negative.cjs', () => {
 });
 
 describe('privacy-block.cjs (regression — wired to one more event)', () => {
-  it('still denies likely-secret paths', () => {
-    const decision = runHook('privacy-block.cjs', { file_path: '/repo/.env.local' });
-    expect(decision.permission).toBe('deny');
+  it('still denies secret-grade paths', () => {
+    for (const p of ['/repo/.env.secret', '/repo/certs/server.pem', '/repo/credentials.json']) {
+      const decision = runHook('privacy-block.cjs', { file_path: p });
+      expect(decision.permission, p).toBe('deny');
+    }
   });
 
   it('allows ordinary files', () => {
@@ -194,43 +196,46 @@ describe('privacy-block.cjs (regression — wired to one more event)', () => {
     expect(decision.permission).toBe('allow');
   });
 
-  // Example/template env files are committed placeholders — the hook scrubs
-  // them from candidates instead of blocking. (git diff .env.example is a
-  // routine inspection, not a secret leak.)
-  const allowedExamples = [
+  // Plain .env files hold dev-environment values only across this repo family,
+  // so they are readable — dev/verify workflows need config values.
+  const allowedEnv = [
+    'cat .env',
+    'git diff .env',
+    'cat .env.local',
+    'cat .env | grep DATABASE_URL',
+    'grep KEY .env && echo done',
     'git diff .env.example',
     'git diff config/.env.sample',
     'cat .env.template',
     'cat .env.dist',
     'cat .env-sample', // hyphenated example variant
-    'cat .envrc', // direnv config — \b must not reach across 'env'
+    'cat .envrc', // direnv config — not a secret file
     'cat .envelope', // word char after .env — not an env file
   ];
-  for (const command of allowedExamples) {
-    it(`allows example env in command: ${command}`, () => {
+  for (const command of allowedEnv) {
+    it(`allows env access in command: ${command}`, () => {
       const decision = runHook('privacy-block.cjs', { tool_input: { command } });
       expect(decision.permission).toBe('allow');
     });
   }
 
-  it('allows an example env file path', () => {
-    const decision = runHook('privacy-block.cjs', { file_path: '/repo/.env.example' });
-    expect(decision.permission).toBe('allow');
+  it('allows plain and example env file paths', () => {
+    for (const p of ['/repo/.env', '/repo/.env.local', '/repo/.env.example']) {
+      const decision = runHook('privacy-block.cjs', { file_path: p });
+      expect(decision.permission, p).toBe('allow');
+    }
   });
 
-  // Real env files stay blocked even when an allow-listed example appears in
-  // the same command — scrubbing must not become a veto smuggle path.
+  // Secret-grade files stay blocked even when an allowed env file appears in
+  // the same command — an allow mention must not become a smuggle path.
   const stillDenied = [
-    'git diff .env',
-    'cat .env.local',
-    'cat .env.production',
-    'cat .env.example && cat .env',
-    'cp .env.example .env && cat .env',
-    'cat .env | grep DATABASE_URL', // pipe bypass — \b closes it
-    'grep KEY .env && echo done',
+    'cat .env.secret',
+    'cat .env.example && cat .env.secret',
+    'cat .env.secret | grep PASSWORD', // pipe bypass
+    'cat certs/server.pem',
   ];
   for (const command of stillDenied) {
-    it(`still denies real env access: ${command}`, () => {
+    it(`still denies secret-grade access: ${command}`, () => {
       const decision = runHook('privacy-block.cjs', { tool_input: { command } });
       expect(decision.permission).toBe('deny');
     });

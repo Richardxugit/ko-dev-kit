@@ -276,7 +276,9 @@ with your existing rules.
   versions, commands and rules still work.
 - **Rules** apply automatically: `coding-standards.mdc` is always on; the archetype rule attaches
   by its `globs`. `AGENTS.md` is loaded by Cursor as project context.
-- **Hooks**: `privacy-block` denies reads/shell/MCP/Tab reads touching likely-secret files;
+- **Hooks**: `privacy-block` denies reads/shell/MCP/Tab reads touching secret-grade files
+  (`.env.secret`, keys, certs, credential stores); plain `.env` files hold dev-environment
+  values only and are readable;
   `safety-guard` guards destructive shell commands — **what** it blocks is policy and lives in
   `.cursor/hooks/destructive-rules.json` (merge-protected, team-editable, no JS required): `deny`
   rules hard-block with the safe alternative named (force push without lease, `reset --hard`,
