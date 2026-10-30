@@ -1,6 +1,6 @@
 # PR Creation Command Design
 
-**Date:** 2026-10-30  
+**Date:** 2026-10-30
 **Status:** Approved in chat for direct implementation
 
 ## Problem
@@ -9,7 +9,7 @@
 
 ## Decision
 
-Rename `/ko-pr-desc` to `/ko-pr-creation`. Preserve its title, template, diff, Jira, and QA-report logic; add branch preparation, a logical commit plan, one preview confirmation, non-force push, and `gh pr create`. Do not wire it into `/ko-feature` yet.
+Rename `/ko-pr-desc` to `/ko-pr-creation`. Preserve its title, template (including authenticated read-only remote lookup), diff, Jira, and QA-report logic; add branch preparation, a logical commit plan, one preview confirmation, non-force push, and `gh pr create`. Do not wire it into `/ko-feature` yet.
 
 ## Flow
 
@@ -68,6 +68,7 @@ Full execution requires an authenticated `gh` and a suitable remote. Without the
 - Execute only the approved commit plan; do not silently include new or excluded files.
 - Push the current branch without force. Rejected/non-fast-forward push stops the workflow.
 - If a PR already exists for the branch, print its URL and stop before creating a duplicate.
+- Keep the local remote-tracking `<diff-base>` (for example `origin/main`) separate from the GitHub `<pr-base>` branch name (`main`); only `<pr-base>` is passed to `gh pr create --base`.
 - Create the PR with the approved title/body and base. Print the returned URL.
 - If PR creation fails after commit/push, report the exact completed state and original error; never claim success or retry blindly.
 

@@ -361,8 +361,16 @@ describe('ko-pr-creation command contract', () => {
     expect(command).toMatch(/PR creation fails after commit\/push[^\n]*exact completed state/i);
   });
 
+  it('keeps the remote-tracking diff base separate from the GitHub PR base', () => {
+    for (const token of ['<diff-base>', '<pr-base>', 'repository branch name', 'never pass `origin/...`', 'git diff <diff-base>...HEAD --stat', 'git log <diff-base>...HEAD --oneline', 'gh pr create --base <pr-base>']) {
+      expect(command, `missing distinct-base contract: ${token}`).toContain(token);
+    }
+    expect(command).not.toContain('gh pr create --base <base>');
+    expect(command).not.toContain('gh pr create --base <diff-base>');
+  });
+
   it('preserves title derivation, templates, diff context, Jira, and QA chaining', () => {
-    for (const token of ['72 characters', 'ticket pattern', 'title content', 'sentence case', 'commit messages', '.github/pull_request_template.md', '.github/PULL_REQUEST_TEMPLATE/*.md', 'docs/pull_request_template.md', '<<...>>', 'git diff <base>...HEAD --stat', 'git log <base>...HEAD --oneline', 'Jira link', '.cursor/specs/qa-reports/*.md', 'Summary', 'What can break']) {
+    for (const token of ['72 characters', 'ticket pattern', 'title content', 'sentence case', 'commit messages', '.github/pull_request_template.md', '.github/PULL_REQUEST_TEMPLATE/*.md', 'docs/pull_request_template.md', 'If no local template and `gh` is authenticated', 'read-only', 'gh api', 'first match wins', '<<...>>', 'git diff <diff-base>...HEAD --stat', 'git log <diff-base>...HEAD --oneline', 'Jira link', '.cursor/specs/qa-reports/*.md', 'Summary', 'What can break']) {
       expect(command, `lost preserved PR-content behavior: ${token}`).toContain(token);
     }
   });

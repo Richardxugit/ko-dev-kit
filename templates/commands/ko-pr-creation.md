@@ -13,7 +13,7 @@ Generate the PR content, preview the exact plan, and only on approval commit, pu
 
 ## Step 0: Preflight and branch safety
 
-Start read-only. Resolve the current branch/HEAD, remote, and base (`origin/main`, then `origin/master`, or the authenticated `gh` default). Gather staged, unstaged, and untracked changes and existing commits; record status/diff and HEAD for later comparison.
+Start read-only. Resolve the current branch/HEAD and remote. Track `<pr-base>` as the repository branch name (`main`, then `master`, or the authenticated `gh` default) and `<diff-base>` as its existing remote-tracking ref (normally `origin/<pr-base>`). Use `<diff-base>` for local diffs and `<pr-base>` for GitHub; never pass `origin/...` to `gh pr create --base`. Gather staged, unstaged, and untracked changes and existing commits; record status/diff and HEAD for later comparison.
 
 - Run `gh auth status` and verify a suitable remote before any full execution. Without them: local preview/manual only; no partial commits, push, or PR.
 - An existing branch with a clean tree and commits absent from base may still push/create with an empty commit plan.
@@ -49,6 +49,8 @@ Search in this order:
 3. `.github/PULL_REQUEST_TEMPLATE/*.md` (use the first file found)
 4. `docs/pull_request_template.md`
 
+If no local template and `gh` is authenticated, probe the same paths read-only in the target repository at `<pr-base>` (for example `gh api repos/{owner}/{repo}/contents/<path>?ref=<pr-base>`); first match wins. Use the returned template without writing remote content.
+
 If found, use it as the body skeleton — fill every `<<...>>` placeholder with generated content based on the diff. Otherwise use:
 
 ```markdown
@@ -70,11 +72,11 @@ Jira - <<insert Jira Link>>
 
 ## Step 3: Gather Diff Context
 
-With `<base>` resolved in Step 0:
+With `<diff-base>` resolved in Step 0:
 
 ```bash
-git diff <base>...HEAD --stat
-git log <base>...HEAD --oneline
+git diff <diff-base>...HEAD --stat
+git log <diff-base>...HEAD --oneline
 ```
 
 Also inspect staged/unstaged diffs and untracked files. Use changed files and commit messages to understand the PR.
@@ -101,7 +103,7 @@ Stage explicit paths only (`git add -- <paths>`); never `git add -A`. After ever
 
 ## Step 6: Preview and approve once
 
-Show one preview with current/base branches, changed files (staged/unstaged/untracked), existing commits, commit plan (or none), **PR Title**, **PR Body**, remote push target (`remote/branch`), and PR base.
+Show one preview with current/base branches (`<branch>` / `<diff-base>`), changed files (staged/unstaged/untracked), existing commits, commit plan (or none), **PR Title**, **PR Body**, remote push target (`remote/branch`), and PR base (`<pr-base>`).
 
 Ask ONCE: “Execute this exact commit → push → PR plan, or leave it manual?” Manual means no commit, push, or PR creation; print the plan/text only. If the tree or HEAD changes after preview, stop and re-preview; approval never covers new files or hunks.
 
@@ -109,5 +111,5 @@ Ask ONCE: “Execute this exact commit → push → PR plan, or leave it manual?
 
 1. Commit only the approved groups in order. Run pre-commit hooks normally; never `--no-verify`. On hook failure, stop before push/PR and report any commits already created honestly.
 2. Push the current branch without force (`git push -u <remote> <branch>`). A rejection/non-fast-forward stops; report commits created and do not create a PR.
-3. Create with the approved title/body/base using `gh pr create --base <base> --head <branch> --title <title> --body <body>` and print the returned URL.
+3. Create with the approved title/body/base using `gh pr create --base <pr-base> --head <branch> --title <title> --body <body>` and print the returned URL.
 4. If PR creation fails after commit/push, report the exact completed state and original error; no blind retry and never claim false success.
