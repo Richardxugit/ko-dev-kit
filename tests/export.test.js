@@ -15,7 +15,7 @@ afterEach(async () => { await fs.remove(outDir); });
 
 const AUTHOR = { name: 'Test Author', email: 'test@example.com' };
 const CORE_COMMANDS = ['ko-onboard', 'ko-spike', 'ko-feature', 'ko-bugfix', 'ko-test',
-  'ko-review', 'ko-verify', 'ko-fix-review', 'ko-pr-desc', 'ko-implement'];
+  'ko-review', 'ko-verify', 'ko-fix-review', 'ko-pr-creation', 'ko-implement'];
 
 describe('extractDependencies', () => {
   it('unions frontmatter deps with skill paths cited in the body', () => {
@@ -88,7 +88,7 @@ describe('exportPlugin', () => {
   });
 
   it('mcp.json: purely-shared commands ship atlassian; archetype-owned ones add their servers', async () => {
-    await exportPlugin({ ...base(), commands: ['ko-onboard', 'ko-pr-desc'] }); // unlisted in resourceMap → shared
+    await exportPlugin({ ...base(), commands: ['ko-onboard', 'ko-pr-creation'] }); // unlisted in resourceMap → shared
     let mcp = await fs.readJson(path.join(outDir, 'ko-dev', 'mcp.json'));
     expect(Object.keys(mcp.mcpServers)).toEqual(['atlassian']);
 
@@ -114,10 +114,10 @@ describe('exportPlugin', () => {
 
 describe('exportCommand --plugin', () => {
   it('single-command bundle gets the marketplace manifest shape too', async () => {
-    await exportCommand('ko-pr-desc', templateDir, outDir, { plugin: true, author: AUTHOR });
-    const manifest = await fs.readJson(path.join(outDir, 'ko-pr-desc', '.cursor-plugin', 'plugin.json'));
-    expect(manifest).toMatchObject({ name: 'ko-pr-desc', version: '1.0.0', license: 'MIT', author: AUTHOR });
+    await exportCommand('ko-pr-creation', templateDir, outDir, { plugin: true, author: AUTHOR });
+    const manifest = await fs.readJson(path.join(outDir, 'ko-pr-creation', '.cursor-plugin', 'plugin.json'));
+    expect(manifest).toMatchObject({ name: 'ko-pr-creation', version: '1.0.0', license: 'MIT', author: AUTHOR });
     expect(manifest.commands).toBe('./commands/');
-    expect(await fs.pathExists(path.join(outDir, 'ko-pr-desc', 'LICENSE'))).toBe(true);
+    expect(await fs.pathExists(path.join(outDir, 'ko-pr-creation', 'LICENSE'))).toBe(true);
   });
 });

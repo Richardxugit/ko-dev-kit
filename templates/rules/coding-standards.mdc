@@ -48,7 +48,7 @@ alwaysApply: true
 
 ## Commits
 
-- **Only commit when working in a git worktree.** If not in a worktree, leave changes uncommitted — the user will commit them.
+- **A non-main/master branch may commit in an ordinary checkout; a worktree is optional.** Never commit on `main`/`master`.
 - **Commit format** — check the branch name for a ticket pattern (e.g. `CON-2000`, `OXP-2000`, `KO-1234`):
   - If ticket found: `type: TICKET short message` (e.g. `feat: CON-2000 add cart page`)
   - If no ticket in branch: `type: short message` (e.g. `fix: correct price display`)
