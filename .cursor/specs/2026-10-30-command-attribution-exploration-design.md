@@ -1,7 +1,7 @@
 # Command Attribution and Exploration Cost Pilot Design
 
 **Date:** 2026-10-30
-**Status:** Direction approved in chat; implementation in progress
+**Status:** Implemented and container-verified; live Cursor model-pin pilot pending
 
 ## Problem
 

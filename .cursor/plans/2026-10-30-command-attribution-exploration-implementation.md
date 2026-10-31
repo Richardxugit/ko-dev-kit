@@ -8,6 +8,8 @@
 
 **Tech Stack:** Node 20, CommonJS hooks, ESM reporter, Markdown Cursor resources, Vitest, pnpm.
 
+**Status:** Tasks 1-3 and container verification complete. AC-10 live Cursor model-pin pilot remains pending.
+
 ---
 
 ### Task 1: Record prompt attribution and response identifiers
