@@ -1,7 +1,7 @@
 # Command Attribution and Exploration Cost Pilot Design
 
-**Date:** 2026-10-30  
-**Status:** Direction approved in chat; written specification pending review
+**Date:** 2026-10-30
+**Status:** Direction approved in chat; implementation in progress
 
 ## Problem
 
