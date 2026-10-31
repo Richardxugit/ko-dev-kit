@@ -67,7 +67,7 @@ const FIXTURES = [
 const MANUAL = ['ko-new-command', 'ko-knowledge-gen', 'ko-release-verify', 'ko-session-metrics'];
 
 // Auto-installed for every archetype, in every fixture.
-const ALWAYS = ['.cursor/commands/ko-pr-desc.md', '.cursor/skills/workflow-refs/SKILL.md', '.cursor/skills/workflow-refs/references/verify-baseline.md', '.cursor/skills/session-metrics/scripts/report.mjs'];
+const ALWAYS = ['.cursor/commands/ko-pr-desc.md', '.cursor/agents/repo-explorer.md', '.cursor/skills/workflow-refs/SKILL.md', '.cursor/skills/workflow-refs/references/verify-baseline.md', '.cursor/skills/session-metrics/scripts/report.mjs'];
 
 let failures = 0;
 for (const fixture of FIXTURES) {
@@ -89,6 +89,13 @@ for (const fixture of FIXTURES) {
         failures++;
         console.error(`  ✗ ${fixture.name}: ${negated ? 'unexpected' : 'missing'} ${target}`);
       }
+    }
+    const hooks = await fs.readJson(path.join(dir, '.cursor/hooks.json'));
+    const ledgerWired = hooks.hooks?.beforeSubmitPrompt?.some(
+      entry => entry.command === 'node .cursor/hooks/session-ledger.cjs');
+    if (!ledgerWired) {
+      failures++;
+      console.error(`  ✗ ${fixture.name}: beforeSubmitPrompt is not wired to .cursor/hooks/session-ledger.cjs`);
     }
     console.log(`  ✓ ${fixture.name}`);
   } finally {

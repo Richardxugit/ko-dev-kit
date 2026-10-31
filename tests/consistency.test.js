@@ -147,6 +147,60 @@ describe('command frontmatter', () => {
   });
 });
 
+describe('repo-explorer recon contract', () => {
+  const agentFile = path.join(templateDir, 'agents', 'repo-explorer.md');
+
+  it('is a bounded read-only fast-model exploration role', () => {
+    expect(fs.pathExistsSync(agentFile), 'repo-explorer agent is missing').toBe(true);
+    const content = fs.readFileSync(agentFile, 'utf-8');
+    const { data } = parseFrontmatter(content);
+    expect(data).toMatchObject({ model: 'fast', readonly: true });
+    for (const token of [
+      'bounded read-only',
+      'no edits',
+      'commands with side effects',
+      'network',
+      'implementation',
+      'verification',
+      'review',
+    ]) {
+      expect(content, `repo-explorer lost read-only boundary "${token}"`).toContain(token);
+    }
+  });
+
+  it('returns concise file evidence and reusable conventions without broad recon', () => {
+    expect(fs.pathExistsSync(agentFile), 'repo-explorer agent is missing').toBe(true);
+    const content = fs.readFileSync(agentFile, 'utf-8');
+    for (const token of [
+      '≤250 words/one page',
+      'concise focused answer',
+      'file:line',
+      'not evidenced',
+      'up to 2 existing peers',
+      'focused target reads',
+      'sibling implementations',
+      'reusable concrete symbols/patterns',
+      'No raw file dumps, code, architecture tours, or speculative recommendations',
+      'Do not repeat broad recon in the main thread',
+    ]) {
+      expect(content, `repo-explorer lost output contract "${token}"`).toContain(token);
+    }
+  });
+
+  it('ko-feature declares and dispatches one bounded repo-explorer with inline fallback', () => {
+    const feature = fs.readFileSync(path.join(templateDir, 'commands', 'ko-feature.md'), 'utf-8');
+    const { data } = parseFrontmatter(feature);
+    expect(data.agents).toEqual(['repo-explorer']);
+    const step = feature.slice(feature.indexOf('## Step 2b:'), feature.indexOf('## Step 2b-2:'));
+    expect(step).toContain('Dispatch ONE `repo-explorer` recon subagent');
+    expect(step).toContain('focused question');
+    expect(step).toContain('*Fallback (no subagent capability):*');
+    for (const token of ['≤250 words/one page', 'file:line', 'not evidenced', 'broad recon', 'main thread']) {
+      expect(step, `ko-feature Step 2b lost boundary "${token}"`).toContain(token);
+    }
+  });
+});
+
 describe('anti-overengineering rules', () => {
   it('coding-standards.mdc carries the Simplicity and Bug fixes sections', () => {
     const content = fs.readFileSync(path.join(templateDir, 'rules', 'coding-standards.mdc'), 'utf-8');
