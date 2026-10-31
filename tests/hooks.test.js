@@ -462,23 +462,119 @@ describe('session-ledger.cjs', () => {
     return { files, lines };
   };
 
+  it('records a leading command with optional whitespace and generation ID, then continues', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    const decision = run({
+      hook_event_name: 'beforeSubmitPrompt', conversation_id: 'c1',
+      prompt: ' \n\t/ko-feature implement attribution', generation_id: 'gen-prompt-1',
+    }, dir);
+    expect(decision).toEqual({ continue: true });
+    const { lines } = readLedger(dir);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toEqual({
+      ts: expect.any(Number), t: 'prompt', command: 'ko-feature', generationId: 'gen-prompt-1',
+    });
+  });
+
+  it('records non-command prompts with a null command and omits a missing generation ID', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    const decision = run({
+      hook_event_name: 'beforeSubmitPrompt', conversation_id: 'c1', prompt: 'Please explain this change',
+    }, dir);
+    expect(decision).toEqual({ continue: true });
+    const { lines } = readLedger(dir);
+    expect(lines).toEqual([
+      { ts: expect.any(Number), t: 'prompt', command: null },
+    ]);
+    expect(lines[0]).not.toHaveProperty('generationId');
+  });
+
+  it('does not treat command-like text later in a prompt as a command', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    const decision = run({
+      hook_event_name: 'beforeSubmitPrompt', conversation_id: 'c1', prompt: 'Please run /ko-feature for this',
+    }, dir);
+    expect(decision).toEqual({ continue: true });
+    const { lines } = readLedger(dir);
+    expect(lines).toEqual([
+      { ts: expect.any(Number), t: 'prompt', command: null },
+    ]);
+  });
+
+  it('never persists prompt arguments, flags, free text, or attachment paths', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    const decision = run({
+      hook_event_name: 'beforeSubmitPrompt', conversation_id: 'c1',
+      prompt: '/ko-feature --scope private-secret do not persist this argument',
+      generation_id: 'gen-private',
+      attachments: [{ file_path: '/private/attachment/secret.txt' }],
+    }, dir);
+    expect(decision).toEqual({ continue: true });
+    const { lines } = readLedger(dir);
+    expect(lines).toEqual([
+      { ts: expect.any(Number), t: 'prompt', command: 'ko-feature', generationId: 'gen-private' },
+    ]);
+    const serialized = JSON.stringify(lines);
+    for (const privateText of ['--scope', 'private-secret', 'do not persist this argument', '/private/attachment/secret.txt']) {
+      expect(serialized).not.toContain(privateText);
+    }
+  });
+
+  it('continues and records null commands for malformed prompt shapes', () => {
+    for (const prompt of [undefined, null, 42, { text: '/ko-feature' }, ['/ko-feature']]) {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+      const decision = run({ hook_event_name: 'beforeSubmitPrompt', conversation_id: 'c1', prompt }, dir);
+      expect(decision).toEqual({ continue: true });
+      const { lines } = readLedger(dir);
+      expect(lines).toEqual([
+        { ts: expect.any(Number), t: 'prompt', command: null },
+      ]);
+    }
+  });
+
+  it('continues prompt submission when the ledger cannot be written', () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    const blocked = path.join(parent, 'not-a-directory');
+    fs.writeFileSync(blocked, 'blocked');
+    const decision = run({
+      hook_event_name: 'beforeSubmitPrompt', conversation_id: 'c1', prompt: '/ko-feature',
+    }, blocked);
+    expect(decision).toEqual({ continue: true });
+  });
+
   it('records a turn with per-model token usage', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
     const decision = run({
       hook_event_name: 'afterAgentResponse', conversation_id: 'c1', model: 'claude-sonnet',
+      generation_id: 'gen-turn-1', model_id: 'model-turn-1',
       input_tokens: 100, output_tokens: 20, cache_read_tokens: 900, cache_write_tokens: 10,
     }, dir);
     expect(decision).toEqual({}); // ledger never feeds back
     const { lines } = readLedger(dir);
     expect(lines).toHaveLength(1);
-    expect(lines[0]).toMatchObject({ t: 'turn', model: 'claude-sonnet', in: 100, out: 20, cr: 900, cw: 10 });
-    expect(typeof lines[0].ts).toBe('number');
+    expect(lines[0]).toEqual({
+      ts: expect.any(Number), t: 'turn', model: 'claude-sonnet', in: 100, out: 20, cr: 900, cw: 10,
+      generationId: 'gen-turn-1', modelId: 'model-turn-1',
+    });
+  });
+
+  it('omits response identifiers when they are not supplied', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
+    const decision = run({
+      hook_event_name: 'afterAgentResponse', conversation_id: 'c1', model: 'claude-sonnet', input_tokens: 5,
+    }, dir);
+    expect(decision).toEqual({});
+    const { lines } = readLedger(dir);
+    expect(lines[0]).not.toHaveProperty('generationId');
+    expect(lines[0]).not.toHaveProperty('modelId');
   });
 
   it('records tool calls with duration and stop events', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ko-ledger-'));
-    run({ hook_event_name: 'postToolUse', conversation_id: 'c1', tool_name: 'Read', duration: 120 }, dir);
-    run({ hook_event_name: 'stop', conversation_id: 'c1', status: 'completed' }, dir);
+    const toolDecision = run({ hook_event_name: 'postToolUse', conversation_id: 'c1', tool_name: 'Read', duration: 120 }, dir);
+    const stopDecision = run({ hook_event_name: 'stop', conversation_id: 'c1', status: 'completed' }, dir);
+    expect(toolDecision).toEqual({});
+    expect(stopDecision).toEqual({});
     const { lines } = readLedger(dir);
     expect(lines[0]).toMatchObject({ t: 'tool', tool: 'Read', ms: 120 });
     expect(lines[1]).toMatchObject({ t: 'stop', status: 'completed' });
@@ -531,5 +627,11 @@ describe('hooks.json consistency', () => {
     for (const file of hookFiles) {
       expect(referenced, `${file} ships but is not wired in hooks.json`).toContain(file);
     }
+  });
+
+  it('wires the session ledger before prompt submission', () => {
+    expect(config.hooks.beforeSubmitPrompt).toContainEqual({
+      command: 'node .cursor/hooks/session-ledger.cjs', timeout: 5,
+    });
   });
 });

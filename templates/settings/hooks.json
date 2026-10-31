@@ -1,6 +1,9 @@
 {
   "version": 1,
   "hooks": {
+    "beforeSubmitPrompt": [
+      { "command": "node .cursor/hooks/session-ledger.cjs", "timeout": 5 }
+    ],
     "beforeReadFile": [
       { "command": "node .cursor/hooks/privacy-block.cjs" }
     ],
