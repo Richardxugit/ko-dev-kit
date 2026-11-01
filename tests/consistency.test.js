@@ -290,6 +290,109 @@ describe('anti-overengineering rules', () => {
   });
 });
 
+describe('ko-pr-creation command contract', () => {
+  const commandPath = path.join(templateDir, 'commands', 'ko-pr-creation.md');
+  const command = fs.pathExistsSync(commandPath) ? fs.readFileSync(commandPath, 'utf-8') : '';
+
+  it('ships the renamed command with creation-focused frontmatter', () => {
+    expect(fs.pathExistsSync(commandPath), 'ko-pr-creation.md is missing').toBe(true);
+    expect(fs.pathExistsSync(path.join(templateDir, 'commands', 'ko-pr-desc.md')), 'old command still ships').toBe(false);
+    const { data } = parseFrontmatter(command);
+    expect(data?.name).toBe('ko-pr-creation');
+    expect(data?.description).toMatch(/create/i);
+    expect(data?.description).toMatch(/pull request|\bPR\b/i);
+  });
+
+  it('protects default branches and detached HEAD with an explicit branch choice', () => {
+    for (const token of ['main', 'master', 'detached HEAD', 'branch in place', 'new worktree + branch', 'Propose a branch name', 'ticket cannot be inferred', 'Never overwrite']) {
+      expect(command, `missing branch-safety contract: ${token}`).toContain(token);
+    }
+    expect(command).toMatch(/main, master, and detached HEAD[^\n]*(?:no|cannot)[^\n]*commit[^\n]*push[^\n]*PR/i);
+    expect(command).toMatch(/ordinary checkout[^\n]*worktree (?:is )?optional/i);
+    expect(command).toMatch(/branch in place[^\n]*(?:retains|preserves)[^\n]*dirty changes/i);
+  });
+
+  it('requires a verified, recoverable dirty-worktree transfer', () => {
+    for (const token of ['record status/diff', '--include-untracked', 'exact stash', 'apply', '--index', 'compare', 'clean, matching transfer', 'drop', 'conflict or mismatch', 'recovery state', 'Run all later steps']) {
+      expect(command, `missing dirty-transfer contract: ${token}`).toContain(token);
+    }
+  });
+
+  it('preflights all change kinds, existing commits, gh, and the remote', () => {
+    for (const token of ['staged', 'unstaged', 'untracked', 'existing commits', 'gh auth status', 'suitable remote', 'local preview/manual']) {
+      expect(command, `missing preflight contract: ${token}`).toContain(token);
+    }
+    expect(command).toMatch(/without (?:them|authenticated gh|a suitable remote)[^\n]*no (?:partial )?commits?[^\n]*push/i);
+    expect(command).not.toMatch(/no branch setup/i); // local branch/worktree setup remains available in manual mode
+    expect(command).toMatch(/clean (?:working )?tree[^\n]*(?:push|create)/i);
+  });
+
+  it('stops for an existing PR or an empty PR diff', () => {
+    expect(command).toMatch(/existing PR[^\n]*print (?:its )?URL[^\n]*stop/i);
+    expect(command).toMatch(/no (?:PR )?diff[^\n]*stop[^\n]*empty PR/i);
+    expect(command).toContain('duplicate');
+  });
+
+  it('previews the exact plan and asks once before any side effects', () => {
+    for (const token of ['current/base branches', 'changed files', 'existing commits', 'commit plan', '**PR Title**', '**PR Body**', 'remote push target', 'PR base', 'Ask ONCE', 'manual']) {
+      expect(command, `missing preview contract: ${token}`).toContain(token);
+    }
+    expect(command).toMatch(/manual[^\n]*no commit, push, or PR/i);
+    expect(command).toMatch(/tree (?:or HEAD )?changes after preview[^\n]*stop[^\n]*re-preview/i);
+  });
+
+  it('allocates only uncommitted changes into explainable logical commits', () => {
+    for (const token of ['Existing commits are never rewritten', 'only uncommitted changes', 'independently explainable logical change', 'not by file count, extension, or directory', 'Implementation and its tests', 'unrelated features, fixes, refactors, docs, and chores', 'exact file list', 'grouping reason', 'type/scope/ticket', 'update files', 'fix stuff', 'wip']) {
+      expect(command, `missing commit-quality contract: ${token}`).toContain(token);
+    }
+  });
+
+  it('requires explicit verified staging and normal pre-commit hooks', () => {
+    for (const token of ['Stage explicit paths', 'git add -A', 'verify the staged paths', 'same-file hunks', 'cannot be split reliably', 'Never amend or rebase', 'pre-commit hooks', '--no-verify']) {
+      expect(command, `missing staging/hook contract: ${token}`).toContain(token);
+    }
+    expect(command).toMatch(/hook failure[^\n]*stop[^\n]*before push\/PR[^\n]*commits already created/i);
+  });
+
+  it('pushes without force and creates only the approved PR', () => {
+    for (const token of ['without force', 'non-fast-forward', 'gh pr create', 'approved title/body/base', 'returned URL', 'original error', 'no blind retry']) {
+      expect(command, `missing push/PR contract: ${token}`).toContain(token);
+    }
+    expect(command).toMatch(/PR creation fails after commit\/push[^\n]*exact completed state/i);
+  });
+
+  it('keeps the remote-tracking diff base separate from the GitHub PR base', () => {
+    for (const token of ['<diff-base>', '<pr-base>', 'repository branch name', 'never pass `origin/...`', 'git diff <diff-base>...HEAD --stat', 'git log <diff-base>...HEAD --oneline', 'gh pr create --base <pr-base>']) {
+      expect(command, `missing distinct-base contract: ${token}`).toContain(token);
+    }
+    expect(command).not.toContain('gh pr create --base <base>');
+    expect(command).not.toContain('gh pr create --base <diff-base>');
+  });
+
+  it('preserves title derivation, templates, diff context, Jira, and QA chaining', () => {
+    for (const token of ['72 characters', 'ticket pattern', 'title content', 'sentence case', 'commit messages', '.github/pull_request_template.md', '.github/PULL_REQUEST_TEMPLATE/*.md', 'docs/pull_request_template.md', 'If no local template and `gh` is authenticated', 'read-only', 'gh api', 'first match wins', '<<...>>', 'git diff <diff-base>...HEAD --stat', 'git log <diff-base>...HEAD --oneline', 'Jira link', '.cursor/specs/qa-reports/*.md', 'Summary', 'What can break']) {
+      expect(command, `lost preserved PR-content behavior: ${token}`).toContain(token);
+    }
+  });
+
+  it('keeps execution scope narrow and does not wire ko-feature to PR creation', () => {
+    expect(command).toMatch(/out of scope[^\n]*merge[^\n]*comments\/reviews[^\n]*editing existing PR/i);
+    const feature = fs.readFileSync(path.join(templateDir, 'commands', 'ko-feature.md'), 'utf-8');
+    expect(feature).not.toContain('/ko-pr-creation');
+  });
+
+  it('documents ordinary-checkout commits without the old worktree-only rule', () => {
+    const standards = fs.readFileSync(path.join(templateDir, 'rules', 'coding-standards.mdc'), 'utf-8');
+    const readme = fs.readFileSync(path.resolve('README.md'), 'utf-8');
+    for (const content of [standards, readme]) {
+      expect(content).not.toMatch(/Only commit when (?:working )?in a git worktree/i);
+      expect(content).toMatch(/non-main\/master branch[^\n]*ordinary checkout/i);
+      expect(content).toMatch(/worktree (?:is )?optional/i);
+    }
+    expect(readme).not.toMatch(/ko-pr-creation<br\/>[^"\n]*merge/i); // merge is outside the command boundary
+  });
+});
+
 describe('cross-kit reference lint', () => {
   // Commands/rules referenced in templates but shipped by OTHER kits.
   // Each must be guarded in the text ("if installed", "ko-product-kit", ...).
@@ -383,6 +486,7 @@ describe('cross-kit reference lint', () => {
 describe('kit-wide staleness lint (dev-kit slice)', () => {
   const BANNED = [
     { name: 'ko-inception (removed command)', re: /ko-inception/ },
+    { name: 'ko-pr-desc (renamed)', re: /ko-pr-desc/ },
     { name: 'ko-lib-component (never existed)', re: /ko-lib-component/ },
     { name: 'ko-release without -verify (renamed)', re: /ko-release(?!-verify)/ },
   ];
@@ -390,8 +494,8 @@ describe('kit-wide staleness lint (dev-kit slice)', () => {
     { file: 'commands/ko-session-metrics.md', token: 'report.mjs' },
     { file: 'commands/ko-release-verify.md', token: 'Preflight' },
     { file: 'commands/ko-release-verify.md', token: 'read-only' },
-    { file: 'commands/ko-pr-desc.md', token: 'Preflight' },
-    { file: 'commands/ko-pr-desc.md', token: 'title content' }, // ticket + slug, never ticket-only when a slug exists
+    { file: 'commands/ko-pr-creation.md', token: 'Preflight' },
+    { file: 'commands/ko-pr-creation.md', token: 'title content' }, // ticket + slug, never ticket-only when a slug exists
     { file: 'skills/workflow-refs/references/feature-input-fetching.md', token: 'Atlassian MCP' },
     { file: 'commands/ko-bugfix.md', token: 'Atlassian MCP' },
     { file: 'commands/ko-ds-component.md', token: 'Atlassian MCP' },
