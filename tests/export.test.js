@@ -79,6 +79,13 @@ describe('exportPlugin', () => {
     expect(result.missing).not.toContain('skills/workflow-refs');
   });
 
+  it('bundles repo-explorer as a ko-feature dependency without gaps', async () => {
+    const result = await exportPlugin(base());
+    expect(result.exported).toContain('agents/repo-explorer.md');
+    expect(result.missing).not.toContain('agents/repo-explorer.md');
+    expect(await fs.pathExists(path.join(outDir, 'ko-dev', 'agents', 'repo-explorer.md'))).toBe(true);
+  });
+
   it('emits an MIT LICENSE by default and honours license option', async () => {
     await exportPlugin(base());
     const license = await fs.readFile(path.join(outDir, 'ko-dev', 'LICENSE'), 'utf-8');
@@ -119,5 +126,12 @@ describe('exportCommand --plugin', () => {
     expect(manifest).toMatchObject({ name: 'ko-pr-creation', version: '1.0.0', license: 'MIT', author: AUTHOR });
     expect(manifest.commands).toBe('./commands/');
     expect(await fs.pathExists(path.join(outDir, 'ko-pr-creation', 'LICENSE'))).toBe(true);
+  });
+
+  it('real single-command ko-feature export includes repo-explorer without gaps', async () => {
+    const result = await exportCommand('ko-feature', templateDir, outDir, { plugin: true, author: AUTHOR });
+    expect(result.exported).toContain('agents/repo-explorer.md');
+    expect(result.missing).not.toContain('agents/repo-explorer.md');
+    expect(await fs.pathExists(path.join(outDir, 'ko-feature', 'agents', 'repo-explorer.md'))).toBe(true);
   });
 });

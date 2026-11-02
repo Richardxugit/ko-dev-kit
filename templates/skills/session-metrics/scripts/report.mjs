@@ -7,7 +7,7 @@
 //   node report.mjs ... --json                        machine-readable output
 //
 // Ledgers are JSONL written by the session-ledger hook: one event per line,
-// { ts, t: 'turn'|'tool'|'stop', ... }. Malformed lines are skipped — a
+// { ts, t: 'prompt'|'turn'|'tool'|'stop', ... }. Malformed lines are skipped — a
 // half-written last line must never break the report.
 //
 // Aggregate mode's headline is the peak-context percentile table: the
@@ -80,20 +80,77 @@ function summarize(convId, events) {
   };
 }
 
+// Attribution is reconstructed from full history before any aggregate window
+// is applied. A non-command prompt or stop never ends the active command.
+function segmentEvents(events) {
+  const segments = [];
+  let current;
+  for (const event of events) {
+    if (event.t === 'prompt' && event.command) {
+      current = { command: event.command, events: [] };
+      segments.push(current);
+    } else if (!current) {
+      current = { command: 'unattributed', events: [] };
+      segments.push(current);
+    }
+    current.events.push(event);
+  }
+  return segments;
+}
+
+function summarizeSegment(segment) {
+  const { convId, ...summary } = summarize(segment.command, segment.events);
+  return { command: segment.command, ...summary };
+}
+
+const toolCallCount = (toolCounts) => Object.values(toolCounts).reduce((sum, count) => sum + count, 0);
+
+function groupCommands(segments) {
+  const groups = new Map();
+  for (const segment of segments) {
+    if (!groups.has(segment.command)) groups.set(segment.command, []);
+    groups.get(segment.command).push(segment);
+  }
+  return [...groups.entries()].map(([command, items]) => {
+    const peaks = items.map((item) => item.peak).sort((a, b) => a - b);
+    return {
+      command,
+      segments: items.length,
+      turns: items.reduce((sum, item) => sum + item.turns, 0),
+      tokensIn: items.reduce((sum, item) => sum + item.tokensIn, 0),
+      tokensOut: items.reduce((sum, item) => sum + item.tokensOut, 0),
+      toolCalls: items.reduce((sum, item) => sum + toolCallCount(item.toolCounts), 0),
+      peakContext: { p50: pctile(peaks, 50), p75: pctile(peaks, 75), p90: pctile(peaks, 90) },
+    };
+  });
+}
+
 function renderSession(s) {
   const models = Object.entries(s.models)
     .map(([m, v]) => `${m} ×${v.turns} (in ${kfmt(v.in)})`).join(', ') || 'none';
   const tools = Object.entries(s.toolCounts)
     .sort((a, b) => b[1] - a[1])
     .map(([t, c]) => `${t} ×${c}`).join(', ') || 'none';
-  return [
+  const lines = [
     `# Session metrics — ${s.convId}`,
     `Window: ${new Date(s.start).toISOString()} → ${new Date(s.end).toISOString()} (wall ${s.wallMin} min, active ${s.activeMin} min)`,
     `Turns: ${s.turns} | Tokens: in ${kfmt(s.tokensIn)} / out ${kfmt(s.tokensOut)}`,
     `Peak context: ~${kfmt(s.peak)} tokens`,
     `Models: ${models}`,
     `Tools: ${tools} (total ${(s.toolMs / 1000).toFixed(1)}s)`,
-  ].join('\n');
+  ];
+  if (s.segments.length > 0) {
+    lines.push('', 'Command-led segments (not exact billing):');
+    for (const segment of s.segments) {
+      const segmentModels = Object.entries(segment.models)
+        .map(([m, v]) => `${m} ×${v.turns} (in ${kfmt(v.in)})`).join(', ') || 'none';
+      const segmentTools = Object.entries(segment.toolCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([t, c]) => `${t} ×${c}`).join(', ') || 'none';
+      lines.push(`${segment.command}: ${segment.turns} turns | Tokens: in ${kfmt(segment.tokensIn)} / out ${kfmt(segment.tokensOut)} | Peak: ~${kfmt(segment.peak)} | Models: ${segmentModels} | Tools: ${segmentTools} | Tool calls: ${toolCallCount(segment.toolCounts)}`);
+    }
+  }
+  return lines.join('\n');
 }
 
 function main() {
@@ -111,10 +168,16 @@ function main() {
 
   if (flag('aggregate')) {
     const sessions = [];
+    const commandSegments = [];
     for (const f of files) {
-      const events = readLedger(path.join(LEDGER_DIR, f)).filter((e) => e.ts >= cutoff);
+      const allEvents = readLedger(path.join(LEDGER_DIR, f));
+      const events = allEvents.filter((e) => e.ts >= cutoff);
       if (events.length === 0) continue;
       sessions.push(summarize(f.replace(/\.jsonl$/, ''), events));
+      for (const segment of segmentEvents(allEvents)) {
+        const clipped = { ...segment, events: segment.events.filter((e) => e.ts >= cutoff) };
+        if (clipped.events.length > 0) commandSegments.push(summarizeSegment(clipped));
+      }
     }
     if (sessions.length === 0) {
       console.log(`No session data in the last ${days} days.`);
@@ -130,17 +193,25 @@ function main() {
       sessions: sessions.length, days,
       peakContext: { p50, p75, p90 },
       suggested: { KO_CONTEXT_WARN: p90, KO_CONTEXT_HANDOFF: handoff },
+      commands: groupCommands(commandSegments),
     };
     if (flag('json')) {
       console.log(JSON.stringify(result, null, 2));
     } else {
-      console.log([
+      const lines = [
         `# Session metrics — aggregate`,
         `Sessions: ${result.sessions} (last ${days} days)`,
         `Peak context percentiles: p50 ~${kfmt(p50)} / p75 ~${kfmt(p75)} / p90 ~${kfmt(p90)} tokens`,
         `Suggested calibration: KO_CONTEXT_WARN=${p90} KO_CONTEXT_HANDOFF=${handoff}` +
           ` (warn at your p90, handoff at 75% of the ${kfmt(windowTokens)} window)`,
-      ].join('\n'));
+      ];
+      if (result.commands.length > 0) {
+        lines.push('', 'Command-led segments (not exact billing):');
+        for (const command of result.commands) {
+          lines.push(`${command.command}: ${command.segments} segments | Turns: ${command.turns} | Tokens: in ${kfmt(command.tokensIn)} / out ${kfmt(command.tokensOut)} | Tool calls: ${command.toolCalls} | Peak p50/p75/p90: ~${kfmt(command.peakContext.p50)}/${kfmt(command.peakContext.p75)}/${kfmt(command.peakContext.p90)}`);
+        }
+      }
+      console.log(lines.join('\n'));
     }
     return;
   }
@@ -162,7 +233,9 @@ function main() {
       })
       .sort((a, b) => b.last - a.last)[0].f;
   }
-  const s = summarize(file.replace(/\.jsonl$/, ''), readLedger(path.join(LEDGER_DIR, file)));
+  const events = readLedger(path.join(LEDGER_DIR, file));
+  const s = summarize(file.replace(/\.jsonl$/, ''), events);
+  s.segments = segmentEvents(events).map(summarizeSegment);
   console.log(flag('json') ? JSON.stringify(s, null, 2) : renderSession(s));
 }
 

@@ -1,6 +1,7 @@
 ---
 name: ko-feature
 description: Start a new feature with archetype-aware context, then hand off to superpowers brainstorming
+agents: [repo-explorer]
 ---
 
 # Feature Workflow
@@ -59,10 +60,11 @@ Review: the archetype rule in `.cursor/rules/`, `AGENTS.md` for project conventi
 
 ## Step 2b: Check Codebase Conventions
 
-Dispatch ONE recon subagent to map how the codebase handles each cross-cutting concern the feature
-touches, per `.cursor/skills/workflow-refs/references/feature-conventions-checklist.md`, and return
-a ≤1-page conventions summary. Keep only the summary in context — the raw file reads stay in the
-subagent.
+Dispatch ONE `repo-explorer` recon subagent with a focused question on the cross-cutting concerns
+this feature touches, per `.cursor/skills/workflow-refs/references/feature-conventions-checklist.md`.
+Return ≤250 words/one page with `file:line` evidence, reusable symbols/patterns, and literal
+`not evidenced` for gaps. Keep only this summary; raw reads stay in the subagent. Do not repeat
+broad recon in the main thread.
 
 *Fallback (no subagent capability):* the same recon inline, per the checklist's read-by-range rule.
 
