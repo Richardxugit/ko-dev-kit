@@ -182,7 +182,8 @@ flowchart LR
     D --> E["/ko-review [--team]<br/>severity-ranked findings"]
     E -->|findings file| G["/ko-fix-review<br/>(fresh session)"]
     G --> B
-    E -->|ship| F["PR → BugBot (if enabled)<br/>→ merge"]
+    E -->|ship| F["/ko-pr-creation<br/>commit → push → PR"]
+    F --> H["BugBot (if enabled) → merge"]
 ```
 
 `/ko-implement` runs tests per task (TDD); `/ko-verify` is the gate before review;
@@ -200,7 +201,7 @@ bug pass on top — `/ko-review` reads its comments and dedupes against them.
 | `/ko-review [--team] [--guide]` | Review a change set — single pass by default; `--team` dispatches specialist reviewers (compliance, regression, simplicity, frontend, backend, tests) with a consolidated verdict; `--guide` walks you through the diff station by station with you holding the verdict |
 | `/ko-fix-review` | Address review feedback — syncs kit findings + human + BugBot comments into one file, fixes each with regression tests. Run in a fresh session |
 | `/ko-verify` | Run build/lint/tests and confirm they pass |
-| `/ko-pr-desc` | Generate PR title and description from diff + branch name |
+| `/ko-pr-creation` | Preview logical commits, push safely, and create a PR with generated title/body |
 | `/ko-explain` | Explain a feature/flow/API or a finished change (PR/branch/range) — visual chat answer with mermaid diagrams + file:line citations; target inferred from args or session context, asks when both are absent |
 
 ### Shared commands (`fe-nx` / `nestjs-graphql` only)
@@ -259,7 +260,7 @@ The kit teaches AI agents to follow repo-specific commit rules configured in eac
 - **design-system**: Conventional Commits: `feat(button): add hover state`
 
 Common rules:
-1. **Only commit when in a git worktree.** If not in a worktree, leave changes uncommitted for the user.
+1. **A non-main/master branch may commit in an ordinary checkout; a worktree is optional.** Never commit directly on `main`/`master`.
 2. **Under 10 words.** Keep commit messages concise.
 3. **Validate against Husky.** Check pre-commit hooks before committing.
 
