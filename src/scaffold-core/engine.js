@@ -2,7 +2,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { parseFrontmatter } from './frontmatter.js';
-import { hashFile, otherKitsClaim, readManifest, writeManifest } from './manifest.js';
+import { otherKitsClaim, readManifest, writeManifest } from './manifest.js';
 
 // Kit-managed resource directories. Copied into .cursor/<dir>/ and overwritten
 // by default (the kit owns them). Archetype filtering applies via ARCHETYPE_RESOURCES.
@@ -33,7 +33,6 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
   const created = [];
   const updated = [];
   const skipped = [];
-  const mergeNeeded = [];
   const owned = [];
   const targets = archetype == null ? [] : [archetype].flat();
 
@@ -66,10 +65,7 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
       const dest = path.join(projectDir, '.cursor', dir, rel);
       const relPath = path.join('.cursor', dir, rel);
       owned.push(relPath);
-      if (dir === 'rules' && overwrite) {
-        // Rules are user-editable: never clobber local edits — see copyRuleProtected.
-        await copyRuleProtected(file, dest, relPath, manifest, created, updated, mergeNeeded);
-      } else if (overwrite) {
+      if (overwrite) {
         await copyOverwrite(file, dest, relPath, created, updated);
       } else {
         await copyIfNotExists(file, dest, relPath, created, skipped);
@@ -79,8 +75,8 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
 
   const hooksSrc = path.join(templateDir, 'hooks');
   if (await fs.pathExists(hooksSrc)) {
-    // .cjs = hook scripts (kit-managed, overwritten). .json = hook policy data
-    // (team-editable, merge-protected like rules — e.g. destructive-rules.json).
+    // .cjs and .json hook files are all kit-managed and overwritten on re-init;
+    // user-owned hook wiring lives in hooks.json (merged below), never here.
     const hookFiles = (await fs.readdir(hooksSrc)).filter(f => f.endsWith('.cjs') || f.endsWith('.json'));
     for (const file of hookFiles) {
       const src = path.join(hooksSrc, file);
@@ -89,8 +85,6 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
       owned.push(relPath);
       if (!overwrite) {
         await copyIfNotExists(src, dest, relPath, created, skipped);
-      } else if (file.endsWith('.json')) {
-        await copyRuleProtected(src, dest, relPath, manifest, created, updated, mergeNeeded);
       } else {
         await copyOverwrite(src, dest, relPath, created, updated);
       }
@@ -147,7 +141,7 @@ export async function scaffoldProject(projectDir, archetype, templateDir, resour
     created, skipped
   );
 
-  return { created, updated, skipped, mergeNeeded, owned };
+  return { created, updated, skipped, owned };
 }
 
 export async function pruneProject(projectDir, archetype, templateDir, resourceMap) {
@@ -358,12 +352,6 @@ export async function installResource(projectDir, type, name, templateDir, optio
   return { created, updated, skipped };
 }
 
-/**
- * Rules (and only rules) are user-editable kit files. Overwrite is allowed
- * only when the on-disk file still matches the hash the kit recorded in the
- * manifest (i.e. the user never touched it). Otherwise the kit version is
- * written to <file>.kit-update and the user merges manually — their edits win.
- */
 // Recommended MCP servers per archetype. For multi-archetype repos the
 // recommendation is the UNION — a React+Nest repo needs Figma for the
 // frontend side AND Atlassian for the backend workflow.
@@ -461,25 +449,6 @@ async function mergeHooksConfig(src, dest, relPath, manifest, created, updated, 
 
   await fs.writeJson(dest, { ...userCfg, hooks: merged }, { spaces: 2 });
   updated.push(relPath);
-}
-
-async function copyRuleProtected(src, dest, relPath, manifest, created, updated, mergeNeeded) {
-  if (!await fs.pathExists(src)) return;
-  if (!await fs.pathExists(dest)) {
-    await fs.ensureDir(path.dirname(dest));
-    await fs.copy(src, dest);
-    created.push(relPath);
-    return;
-  }
-  const entry = manifest?.files?.find(f => f.path === relPath);
-  const diskHash = await hashFile(dest);
-  if (entry && entry.sha256 === diskHash) {
-    await fs.copy(src, dest, { overwrite: true });
-    updated.push(relPath);
-    return;
-  }
-  await fs.writeFile(`${dest}.kit-update`, await fs.readFile(src));
-  mergeNeeded.push(relPath);
 }
 
 async function copyOverwrite(src, dest, relPath, created, updated) {

@@ -83,10 +83,6 @@ export async function runInit(projectDir, options = {}) {
     console.log(chalk.cyan('\nUpdated:'));
     for (const file of result.updated) console.log(chalk.cyan(`  ↻ ${file}`));
   }
-  if (result.mergeNeeded.length > 0) {
-    console.log(chalk.yellow('\nKept your version (kit update saved next to it — merge manually):'));
-    for (const file of result.mergeNeeded) console.log(chalk.yellow(`  ⇄ ${file} (new: ${file}.kit-update)`));
-  }
   if (result.skipped.length > 0) {
     const label = options.overwrite === false
       ? 'Skipped (--no-overwrite):'

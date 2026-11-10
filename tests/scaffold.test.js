@@ -31,37 +31,32 @@ describe('scaffoldProject', () => {
     expect(await fs.pathExists(path.join(tmpDir, '.cursor/skills/storybook/SKILL.md'))).toBe(false);
   });
 
-  it('overwrites an unmodified rule (hash matches manifest)', async () => {
+  it('re-scaffold overwrites rules in place (no .kit-update)', async () => {
     await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
-    // Manifest must cover every merge-protected file the scaffold installs
-    // (rules + hook policy JSON) — a file with no manifest entry reads as
-    // user-modified by design.
     const RULES = ['.cursor/rules/coding-standards.mdc', '.cursor/rules/fe-nx.mdc', '.cursor/hooks/destructive-rules.json'];
-    const first = await writeManifest(tmpDir, MANIFEST, { kitVersion: '0.0.0', archetypes: ['fe-nx'], files: RULES });
-    const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir, { manifest: first });
+    const manifest = await writeManifest(tmpDir, MANIFEST, { kitVersion: '0.0.0', archetypes: ['fe-nx'], files: RULES });
+    const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir, { manifest });
     expect(result.updated).toContain('.cursor/rules/coding-standards.mdc');
-    expect(result.mergeNeeded).toEqual([]);
     expect(await fs.pathExists(path.join(tmpDir, '.cursor/rules/coding-standards.mdc.kit-update'))).toBe(false);
   });
 
-  it('never clobbers a user-modified rule — writes a .kit-update instead', async () => {
+  it('overwrites a user-modified rule on re-scaffold', async () => {
     await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
     const manifest = await writeManifest(tmpDir, MANIFEST, { kitVersion: '0.0.0', archetypes: ['fe-nx'], files: ['.cursor/rules/coding-standards.mdc'] });
     const rulePath = path.join(tmpDir, '.cursor/rules/coding-standards.mdc');
     await fs.appendFile(rulePath, '\n- our house rule\n');
     const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir, { manifest });
-    expect(result.mergeNeeded).toContain('.cursor/rules/coding-standards.mdc');
-    expect(result.updated).not.toContain('.cursor/rules/coding-standards.mdc');
-    expect(await fs.readFile(rulePath, 'utf-8')).toContain('our house rule');
-    expect(await fs.pathExists(`${rulePath}.kit-update`)).toBe(true);
+    expect(result.updated).toContain('.cursor/rules/coding-standards.mdc');
+    expect(await fs.readFile(rulePath, 'utf-8')).not.toContain('our house rule');
+    expect(await fs.pathExists(`${rulePath}.kit-update`)).toBe(false);
   });
 
-  it('protects a pre-existing rule when there is no manifest entry', async () => {
+  it('overwrites a pre-existing rule with no manifest entry', async () => {
     const rulePath = path.join(tmpDir, '.cursor/rules/coding-standards.mdc');
     await fs.outputFile(rulePath, 'hand-written rule\n');
     const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir, { manifest: null });
-    expect(result.mergeNeeded).toContain('.cursor/rules/coding-standards.mdc');
-    expect(await fs.readFile(rulePath, 'utf-8')).toBe('hand-written rule\n');
+    expect(result.updated).toContain('.cursor/rules/coding-standards.mdc');
+    expect(await fs.readFile(rulePath, 'utf-8')).not.toBe('hand-written rule\n');
   });
 
   it('prunes only resources matching none of the active archetypes', async () => {
@@ -79,7 +74,7 @@ describe('scaffoldProject', () => {
     expect(await fs.pathExists(path.join(tmpDir, '.cursor/hooks/destructive-rules.json'))).toBe(true);
   });
 
-  it('hook policy JSON is merge-protected like a rule (team-editable)', async () => {
+  it('hook policy JSON is kit-managed: overwritten on re-scaffold', async () => {
     await scaffoldProject(tmpDir, ['fe-nx'], templateDir);
     const POLICY = '.cursor/hooks/destructive-rules.json';
     const manifest = await writeManifest(tmpDir, MANIFEST, { kitVersion: '0.0.0', archetypes: ['fe-nx'], files: [POLICY] });
@@ -88,9 +83,20 @@ describe('scaffoldProject', () => {
     policy.safeDeleteTargets.push('our-build-out');
     await fs.writeJson(policyPath, policy, { spaces: 2 });
     const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir, { manifest });
-    expect(result.mergeNeeded).toContain(POLICY);
-    expect((await fs.readJson(policyPath)).safeDeleteTargets).toContain('our-build-out');
-    expect(await fs.pathExists(`${policyPath}.kit-update`)).toBe(true);
+    expect(result.updated).toContain(POLICY);
+    expect((await fs.readJson(policyPath)).safeDeleteTargets).not.toContain('our-build-out');
+    expect(await fs.pathExists(`${policyPath}.kit-update`)).toBe(false);
+  });
+
+  it('never touches user content in .cursor/specs', async () => {
+    const specPath = path.join(tmpDir, '.cursor', 'specs', 'my-design.md');
+    await fs.outputFile(specPath, 'my design doc\n');
+    const result = await scaffoldProject(tmpDir, ['fe-nx'], templateDir, { manifest: null });
+    expect(await fs.readFile(specPath, 'utf-8')).toBe('my design doc\n');
+    expect(await fs.readdir(path.dirname(specPath))).toEqual(['my-design.md']);
+    expect([...result.created, ...result.updated]).not.toEqual(
+      expect.arrayContaining([expect.stringContaining('specs')]),
+    );
   });
 
   it('hook scripts (.cjs) stay kit-managed: overwritten on re-scaffold', async () => {

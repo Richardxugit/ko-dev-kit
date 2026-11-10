@@ -137,19 +137,17 @@ and import it via **Cursor Dashboard → Plugins → Add Marketplace**.
 | Slash commands | `.cursor/commands/*.md` (`/ko-*`) | kit-managed (overwritten on `init`) |
 | Skills | `.cursor/skills/<name>/SKILL.md` (+ `references/`) | kit-managed |
 | Subagents | `.cursor/agents/*.md` | kit-managed |
-| Rules | `.cursor/rules/*.mdc` | merge-protected (see below) |
+| Rules | `.cursor/rules/*.mdc` | kit-managed |
 | Project context | root `AGENTS.md` | user-protected |
-| Hooks | `.cursor/hooks/*.cjs` + `destructive-rules.json` + `.cursor/hooks.json` | scripts kit-managed; policy JSON merge-protected; `hooks.json` merged (see below) |
+| Hooks | `.cursor/hooks/*.cjs` + `destructive-rules.json` + `.cursor/hooks.json` | scripts and policy JSON kit-managed; `hooks.json` merged (see below) |
 | MCP servers | `.cursor/mcp.json` | user-protected |
 | CLI permissions | `.cursor/cli.json` | user-protected |
 
 "User-protected" files are created once and never overwritten — edit them freely. Re-running
-`init` refreshes the kit-managed commands/skills/agents.
-
-Rules are **merge-protected**: `init` overwrites a rule only when its on-disk content still
-matches the hash recorded in the manifest (i.e. you never edited it). If you did edit it, your
-version stays and the kit's new version is written to `<rule>.mdc.kit-update` next to it —
-merge manually, then delete the `.kit-update` file.
+`init` overwrites every kit-managed file (commands, skills, agents, rules, hook scripts and
+policy JSON) with the template version; any local edits to those files are replaced. Keep
+project-specific content in `.cursor/specs/` (or user-protected files) instead of editing
+kit-managed files in place. Pass `--no-overwrite` to skip existing files entirely.
 
 ## Resource matrix
 
