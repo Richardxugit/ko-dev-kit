@@ -22,7 +22,7 @@ program.name('ko-dev-kit').description('Scaffold Cursor configuration for FE/BE/
 program
   .command('init')
   .description('Initialize Cursor configuration in the current project')
-  .option('--no-overwrite', "Do not overwrite existing kit-managed files (today's behavior)")
+  .option('--no-overwrite', 'Keep existing files untouched — skip all updates')
   .option('--archetype <archetype>', 'Skip detection and prompts; comma-separate for multi-archetype monorepos')
   .action(async (opts) => {
     await runInit(process.cwd(), { overwrite: opts.overwrite, archetype: opts.archetype });
