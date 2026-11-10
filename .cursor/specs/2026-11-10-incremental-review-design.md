@@ -1,7 +1,7 @@
 # Incremental Review Design
 
 **Date:** 2026-11-10
-**Status:** Draft — awaiting user confirmation before implementation
+**Status:** Confirmed — implemented 2026-11-11
 
 ## Problem
 
@@ -64,7 +64,7 @@ flowchart LR
 - `templates/skills/workflow-refs/references/` — review-file footer format note (one short addition to the existing mr-reviews reference).
 - `tests/consistency.test.js` — contract tests: `--full` flag documented, footer format, incremental branch present.
 
-## Open questions for the user
+## Decisions (confirmed 2026-11-11)
 
-1. Should `/ko-review` default to incremental for any second run, or ask the user ("re-review delta only?")? Default proposal: run incremental silently and print one line of what was scoped; `--full` when wanted.
-2. Force-pushed branches reset to full silently — acceptable, or should it warn?
+1. Incremental runs **silently by default** and prints one line of what was scoped; `--full` when a fresh pass is wanted.
+2. Force-pushed branches reset to a full pass **silently, with a note in the output** (as in the degradation section).

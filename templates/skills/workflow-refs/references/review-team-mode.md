@@ -86,6 +86,8 @@ Write the consolidated review to `.cursor/specs/mr-reviews/<id>.md` (create the 
 PR number(s) or the branch slug; run `git check-ignore .cursor/specs` first and warn if it is
 ignored; no repo → output in chat only) **and** present it in chat. The file holds: the change-set
 summary, findings grouped by severity with dimension tags, the cross-PR section when relevant, and
-the verdict (verdict definitions are in the command body). **Chat vs file split:** chat shows
+the verdict (verdict definitions are in the command body). **Footer:** end the file with
+`reviewed-sha: <HEAD sha>` and `mode: full|team|guide` — this is what incremental rounds read
+(see `review-incremental-mode.md`). **Chat vs file split:** chat shows
 Blocking and Should-fix findings plus the verdict; Nits stay in the file, with one chat line
 pointing there.

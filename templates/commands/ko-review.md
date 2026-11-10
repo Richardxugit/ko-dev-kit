@@ -1,7 +1,7 @@
 ---
 name: ko-review
-description: Review a change set — single code-reviewer pass by default; --team dispatches specialist reviewers (compliance, regression, frontend, backend, tests, simplicity) in one round with a consolidated severity-ranked verdict; --guide walks you through the diff station by station with you holding the verdict
-args: "[PR number/URL, or several comma-separated] [--team] [--guide]"
+description: Review a change set — single code-reviewer pass by default; --team dispatches specialist reviewers (compliance, regression, frontend, backend, tests, simplicity) in one round with a consolidated severity-ranked verdict; --guide walks you through the diff station by station with you holding the verdict; --full forces a fresh full pass
+args: "[PR number/URL, or several comma-separated] [--team] [--guide] [--full]"
 agents: [code-reviewer, review-specialist]
 skills-optional: [wcag-2.2-aa]
 ---
@@ -10,29 +10,31 @@ skills-optional: [wcag-2.2-aa]
 
 Three depths of the same operation:
 
-- **`/ko-review`** (default) — one `code-reviewer` pass over the diff. Fast, cheap, right for the working diff.
+- **`/ko-review`** (default) — one `code-reviewer` pass over the diff. Fast, cheap.
 - **`/ko-review --team`** — dispatch a team of `review-specialist` sub-agents, one per dimension, consolidated severity-ranked verdict. Costs more tokens on purpose — the payoff is that one invocation surfaces every dimension's findings. Use before merging a real PR, or for a feature whose backend and frontend ship as separate PRs.
 - **`/ko-review --guide`** — guided review: the agent walks you through the diff station by station; you judge, it co-pilots. Use when YOU want to understand and decide, not just be told — big PRs from others, unfamiliar areas.
 
-**Choosing a mode:** no argument + a working diff → single pass. A PR URL/number, several PRs, or a diff over ~15 files → use `--team` (or suggest it to the user). The user asking to be walked through, or hesitating over a large/unfamiliar diff → suggest `--guide`.
+**Choosing a mode:** no argument + working diff → single pass. A PR, several PRs, or a diff over ~15 files → `--team`. User wants a walk-through or hesitates on a large/unfamiliar diff → `--guide`.
+
+**Incremental rounds:** re-running `/ko-review` on the same change set is **incremental by default** — only the delta since the last reviewed commit is re-read; prior findings are verified by state, not re-derived. `--full` forces a fresh full pass. Procedure and degradation: `.cursor/skills/workflow-refs/references/review-incremental-mode.md`.
 
 This command **reviews and reports — it never edits code and never posts to the PR.**
 
 ## Step 0: Preflight (probe, then degrade — no hard stop)
 
-One quick probe; this is user-triggered analysis, not a release gate, so a missing tool degrades the scope rather than blocking:
+One quick probe — user-triggered analysis, not a release gate; a missing tool degrades scope rather than blocking:
 
-- `gh auth status` — if green, `gh` may be used **read-only**: fetch a PR's diff and metadata, resolve the default branch, note failing CI checks as context. **Never** `gh pr create` / `edit` / `comment` / `review` — this command is output-only.
-- **BugBot evidence** — when reviewing a PR, pull existing bot reviews (`gh api repos/{owner}/{repo}/pulls/<n>/comments` inline + `gh pr view <n> --comments` summary, filtered to BugBot/Cursor-bot authors) and feed them to reviewers as prior findings. BugBot spots logic bugs in the diff; it cannot see spec compliance, simplicity, or blast radius — that is our lane. None found → one line ("BugBot not configured on this repo — worth enabling (Cursor → Automations)") and move on.
+- `gh auth status` — if green, `gh` is **read-only** here: fetch PR diff and metadata, resolve the default branch, note failing CI checks. **Never** `gh pr create` / `edit` / `comment` / `review` — output-only.
+- **BugBot evidence** — when reviewing a PR, pull existing bot reviews (`gh api repos/{owner}/{repo}/pulls/<n>/comments` inline + `gh pr view <n> --comments` summary, filtered to BugBot/Cursor-bot authors) and feed them to reviewers as prior findings. BugBot sees logic bugs only — spec compliance, simplicity, blast radius are our lane. None found → one line ("BugBot not configured on this repo — worth enabling (Cursor → Automations)") and move on.
 - If `gh` is absent or unauthenticated, or the arg is not a PR: proceed on **local git only**, resolving the base branch by probing `origin/main` then `origin/master`.
 
 Print a one-line `✅/❌ gh` so the user knows which mode they're in.
 
 ## Step 1: Resolve the change set
 
-- **No argument** → the working diff: uncommitted + staged (`git diff` and `git diff --staged`), or the branch vs the resolved base when the tree is clean.
+- **No argument** → the working diff: uncommitted + staged, or branch vs resolved base when the tree is clean.
 - **One PR** (`<number>` or URL) → `gh pr diff <n>` for the patch and `gh pr view <n> --json title,body,headRefName,files` for metadata.
-- **Several PRs** (comma/space-separated) → fetch each the same way. This is the "one feature, backend PR + frontend PR" case; keep each PR's diff labeled so findings and the cross-PR pass can attribute them.
+- **Several PRs** (comma/space-separated) → fetch each the same way — the "one feature, BE PR + FE PR" case; keep each PR's diff labeled for cross-PR attribution.
 
 Restate the change set in one or two lines (what it does, which PR(s)/branch) before reviewing.
 
@@ -40,8 +42,8 @@ Restate the change set in one or two lines (what it does, which PR(s)/branch) be
 
 Invoke **`superpowers:requesting-code-review`** to structure the review with verification checkpoints and dimensional analysis. *Fallback (no superpowers):* follow the steps below manually.
 
-1. Gather the diff (Step 1) and prior evidence: the newest matching QA report in `.cursor/specs/qa-reports/` (risk areas, introduced failures) and the spec's acceptance criteria when one exists — these prime the reviewer with known risk areas instead of a cold read.
-2. Delegate to the **`code-reviewer`** subagent (in `.cursor/agents/`) with the diff, the repo's rules, and the prior evidence as context.
+1. Gather the diff (Step 1) and prior evidence: the newest QA report in `.cursor/specs/qa-reports/` and the spec's acceptance criteria when one exists — primes the reviewer with known risk areas instead of a cold read.
+2. Delegate to the **`code-reviewer`** subagent with the diff, repo rules, and prior evidence as context.
 3. The reviewer checks: business logic vs the spec's acceptance criteria, convention fidelity (declaration style, reuse-or-justify), simplicity, test quality (would-fail-if-broken, mock discipline), regression blast radius, and security. Its full checklist lives in `.cursor/agents/code-reviewer.md`.
 4. Present findings grouped by severity — **Blocking / Should-fix / Nit** — each as `path:line — problem. Suggested fix.`
 5. If nothing is wrong, say so. Don't manufacture issues.
@@ -85,7 +87,7 @@ Same preflight and change-set resolution, then the agent walks you through the d
 2. **Stations** — each shows what changed (plain English, `path:line`), the file's one-line job, watch-points, and exactly ONE question for you to answer. You steer: `next`, ask anything (the route pauses, then resumes), `flag` (your finding, first-class), `wrap` (finish early).
 3. **Verdict** — your flags + the agent's observations merge into the same Ship / Ship with fixes / Do not merge block, written to `.cursor/specs/mr-reviews/<id>.md` and paste-ready. The verdict is yours; the agent advises, and dismissed findings are recorded, never relitigated.
 
-Station protocol, controls, interrupt/resume: `.cursor/skills/workflow-refs/references/review-guide-mode.md`. `--guide` is always a single co-pilot — never sub-agent fan-out; `--team --guide` runs the team first, then guides you through their findings mapped onto stations.
+Station protocol, controls, interrupt/resume: `.cursor/skills/workflow-refs/references/review-guide-mode.md`. `--guide` is a single co-pilot — never fan-out; `--team --guide` runs the team first, then guides you through their findings mapped onto stations.
 
 ## Boundaries
 
