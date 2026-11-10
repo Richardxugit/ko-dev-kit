@@ -59,10 +59,12 @@ Invoke **`superpowers:requesting-code-review`** to structure the review with ver
 | 5 | **backend** | BE files present | resolver/API contracts, module boundaries, data access (N+1, transactions), auth, idempotency, BE archetype rule |
 | 6 | **tests** | always | **would fail if broken**; mock discipline (out-of-process only); behavior assertions; deterministic/isolated; changed paths still protected |
 
-Dimensions 1, 2, 3, and 6 always run. Dimensions 4 and 5 run only when the diff touches files of that kind. Each runs as its own `review-specialist` sub-agent — the agent holds the full playbook for every dimension.
+Dimensions 1, 2, 3, and 6 always run. Dimensions 4 and 5 run only when the diff touches files of that kind. Each runs as its own `review-specialist` sub-agent — the dispatcher injects only that dimension's playbook.
 
 **Procedure** (file bucketing, shared context, dispatch prompt template, aggregation, cross-PR
-pass, output file): `.cursor/skills/workflow-refs/references/review-team-mode.md`. Sequential
+pass, output file): `.cursor/skills/workflow-refs/references/review-team-mode.md`. Per-dimension
+playbooks: `workflow-refs/references/review-specialist-playbooks.md` — inject only the assigned
+dimension's section, never the whole file. Sequential
 fallback (no sub-agent fan-out): run dimensions one at a time — identical output, slower.
 
 ### Verdict

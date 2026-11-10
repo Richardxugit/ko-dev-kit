@@ -61,7 +61,9 @@ review found an architectural problem, not three separate ones.
 
 ## Step 4: Verify and wrap up
 
-1. Run `/ko-verify` on the full change set.
+1. Run `/ko-verify --lean` scoped to the affected files — the feature already ran the full gate
+   suite before review, and each fix above carries its own regression test; do not re-run all
+   seven gates for a few finding fixes.
 2. Update the findings file: every item `resolved` / `wontfix` (with the reason from
    Step 2), plus a summary line with the date and commit range.
 3. Present the summary in chat. If the user wants the PR updated, offer a paste-ready
