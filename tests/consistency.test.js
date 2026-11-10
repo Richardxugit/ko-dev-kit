@@ -201,6 +201,64 @@ describe('repo-explorer recon contract', () => {
   });
 });
 
+describe('review read discipline', () => {
+  it('code-reviewer.md carries the read-discipline rules', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'agents', 'code-reviewer.md'), 'utf-8');
+    expect(content).toContain('## Read discipline');
+    expect(content).toContain('git show HEAD:<path>'); // read the version the diff was made against
+    expect(content).toContain('Cache the MCP tool list'); // get_mcp_tools once per session
+    expect(content).toContain('curl -sSfL'); // web_fetch fallback
+  });
+
+  it('review-specialist.md points at the shared read discipline', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
+    expect(content).toContain('Read discipline');
+    expect(content).toContain('code-reviewer.md');
+  });
+
+  it('repo-explorer.md verifies paths before reading', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'agents', 'repo-explorer.md'), 'utf-8');
+    expect(content).toContain('Verify a path exists before reading');
+  });
+});
+
+describe('review team cost hygiene', () => {
+  it('review-specialist.md carries protocol only — playbooks moved to the reference', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
+    expect(content).toContain('model: fast'); // pin survives the split
+    expect(content).toContain('review-specialist-playbooks.md'); // pointer to the moved playbooks
+    expect(content).not.toContain('### `compliance`'); // playbook sections left the agent file
+    expect(content).not.toContain('### `tests`');
+  });
+
+  it('the playbooks reference holds all six dimensions', () => {
+    const ref = fs.readFileSync(
+      path.join(templateDir, 'skills', 'workflow-refs', 'references', 'review-specialist-playbooks.md'), 'utf-8');
+    for (const dim of ['compliance', 'regression', 'frontend', 'backend', 'tests', 'simplicity']) {
+      expect(ref, `playbooks reference lost dimension "${dim}"`).toContain(`## \`${dim}\``);
+    }
+  });
+
+  it('team dispatch injects only the assigned dimension playbook', () => {
+    const teamMode = fs.readFileSync(
+      path.join(templateDir, 'skills', 'workflow-refs', 'references', 'review-team-mode.md'), 'utf-8');
+    expect(teamMode).toContain('review-specialist-playbooks.md');
+    expect(teamMode).toContain('never the whole file');
+  });
+
+  it('fix-review verifies lean instead of the full gate suite', () => {
+    const fix = fs.readFileSync(path.join(templateDir, 'commands', 'ko-fix-review.md'), 'utf-8');
+    expect(fix).toContain('--lean'); // affected scope, not all seven gates
+    expect(fix).not.toContain('on the full change set');
+  });
+
+  it('team verdict keeps Nits out of chat', () => {
+    const teamMode = fs.readFileSync(
+      path.join(templateDir, 'skills', 'workflow-refs', 'references', 'review-team-mode.md'), 'utf-8');
+    expect(teamMode).toContain('Nits stay in the file');
+  });
+});
+
 describe('anti-overengineering rules', () => {
   it('coding-standards.mdc carries the Simplicity and Bug fixes sections', () => {
     const content = fs.readFileSync(path.join(templateDir, 'rules', 'coding-standards.mdc'), 'utf-8');
@@ -272,9 +330,10 @@ describe('anti-overengineering rules', () => {
   });
 
   it('review-specialist a11y fallback points at the shared checklist (no inline restatement)', () => {
-    const agent = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
-    expect(agent).toContain('workflow-refs/references/verify-a11y-checklist.md');
-    expect(agent).not.toContain('prefers-reduced-motion'); // detail lives in the checklist
+    const playbooks = fs.readFileSync(
+      path.join(templateDir, 'skills', 'workflow-refs', 'references', 'review-specialist-playbooks.md'), 'utf-8');
+    expect(playbooks).toContain('workflow-refs/references/verify-a11y-checklist.md');
+    expect(playbooks).not.toContain('prefers-reduced-motion'); // detail lives in the checklist
   });
 
   it('ko-fix-review exists and is referenced as the review follow-up', () => {
@@ -324,8 +383,9 @@ describe('anti-overengineering rules', () => {
   });
 
   it('review-specialist has a simplicity playbook', () => {
-    const content = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
-    expect(content).toContain('### `simplicity`');
+    const content = fs.readFileSync(
+      path.join(templateDir, 'skills', 'workflow-refs', 'references', 'review-specialist-playbooks.md'), 'utf-8');
+    expect(content).toContain('## `simplicity`');
   });
 
   it('spec AC contract: feature cites it, review traces per AC id', () => {
@@ -336,10 +396,11 @@ describe('anti-overengineering rules', () => {
     expect(contract).toContain('## Acceptance Criteria'); // the fixed heading anchor
     expect(contract).toContain('AC-n'); // stable ids
     expect(contract).toContain('never deleted'); // ids are struck through, not removed
-    for (const agent of ['code-reviewer.md', 'review-specialist.md']) {
-      const content = fs.readFileSync(path.join(templateDir, 'agents', agent), 'utf-8');
-      expect(content, `${agent} traces per AC id`).toContain('per AC');
-      expect(content, `${agent} treats a silently omitted AC as Blocking`).toContain('silently omitted AC is **Blocking**');
+    const reviewers = [path.join('agents', 'code-reviewer.md'), path.join('skills', 'workflow-refs', 'references', 'review-specialist-playbooks.md')];
+    for (const file of reviewers) {
+      const content = fs.readFileSync(path.join(templateDir, file), 'utf-8');
+      expect(content, `${file} traces per AC id`).toContain('per AC');
+      expect(content, `${file} treats a silently omitted AC as Blocking`).toContain('silently omitted AC is **Blocking**');
     }
   });
 });
@@ -569,8 +630,8 @@ describe('kit-wide staleness lint (dev-kit slice)', () => {
     { file: 'agents/code-reviewer.md', token: 'Regression' },
     { file: 'agents/review-specialist.md', token: 'diff hunk' },
     { file: 'agents/review-specialist.md', token: 'do not rewrite' },
-    { file: 'agents/review-specialist.md', token: 'Mock discipline' },
-    { file: 'agents/review-specialist.md', token: 'Convention fidelity' },
+    { file: 'skills/workflow-refs/references/review-specialist-playbooks.md', token: 'Mock discipline' },
+    { file: 'skills/workflow-refs/references/review-specialist-playbooks.md', token: 'Convention fidelity' },
     { file: 'commands/ko-review.md', token: 'regression' },
     { file: 'commands/ko-review.md', token: 'simplicity' },
     { file: 'commands/ko-review.md', token: '--team' },
