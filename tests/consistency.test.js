@@ -60,6 +60,34 @@ describe('context budget', () => {
   });
 });
 
+describe('incremental review contract', () => {
+  const refsDir = path.join(templateDir, 'skills', 'workflow-refs', 'references');
+  const reviewCmd = fs.readFileSync(path.join(templateDir, 'commands', 'ko-review.md'), 'utf-8');
+  const incRef = () => fs.readFileSync(path.join(refsDir, 'review-incremental-mode.md'), 'utf-8');
+
+  it('ko-review documents --full and incremental-by-default', () => {
+    expect(reviewCmd, '--full flag missing from args').toMatch(/--full/);
+    expect(reviewCmd, 'no incremental-by-default language').toMatch(/incremental by default/);
+  });
+
+  it('ko-review cites review-incremental-mode.md and the reference exists', () => {
+    expect(reviewCmd).toMatch(/review-incremental-mode\.md/);
+    expect(fs.pathExistsSync(path.join(refsDir, 'review-incremental-mode.md')), 'missing reference file').toBe(true);
+  });
+
+  it('the incremental reference defines the footer contract and degradation', () => {
+    const ref = incRef();
+    expect(ref).toMatch(/reviewed-sha: <sha>/);
+    expect(ref).toMatch(/mode: full\|incremental\|team\|guide/);
+    expect(ref, 'no silent full-pass fallback documented').toMatch(/fall back to a full pass/);
+  });
+
+  it('the --team reference documents the review-file footer', () => {
+    const team = fs.readFileSync(path.join(refsDir, 'review-team-mode.md'), 'utf-8');
+    expect(team, 'footer format missing from team reference').toMatch(/reviewed-sha: <HEAD sha>/);
+  });
+});
+
 describe('archetype consistency', () => {
   it('ARCHETYPE_LABELS keys match ARCHETYPES', () => {
     expect(new Set(Object.keys(ARCHETYPE_LABELS))).toEqual(new Set(ARCHETYPES));
