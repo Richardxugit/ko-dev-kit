@@ -201,6 +201,27 @@ describe('repo-explorer recon contract', () => {
   });
 });
 
+describe('review read discipline', () => {
+  it('code-reviewer.md carries the read-discipline rules', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'agents', 'code-reviewer.md'), 'utf-8');
+    expect(content).toContain('## Read discipline');
+    expect(content).toContain('git show HEAD:<path>'); // read the version the diff was made against
+    expect(content).toContain('Cache the MCP tool list'); // get_mcp_tools once per session
+    expect(content).toContain('curl -sSfL'); // web_fetch fallback
+  });
+
+  it('review-specialist.md points at the shared read discipline', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'agents', 'review-specialist.md'), 'utf-8');
+    expect(content).toContain('Read discipline');
+    expect(content).toContain('code-reviewer.md');
+  });
+
+  it('repo-explorer.md verifies paths before reading', () => {
+    const content = fs.readFileSync(path.join(templateDir, 'agents', 'repo-explorer.md'), 'utf-8');
+    expect(content).toContain('Verify a path exists before reading');
+  });
+});
+
 describe('anti-overengineering rules', () => {
   it('coding-standards.mdc carries the Simplicity and Bug fixes sections', () => {
     const content = fs.readFileSync(path.join(templateDir, 'rules', 'coding-standards.mdc'), 'utf-8');
