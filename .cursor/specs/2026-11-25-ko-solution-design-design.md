@@ -1,7 +1,7 @@
 # Solution Design Command Design
 
 **Date:** 2026-11-25
-**Status:** Approved in chat; awaiting written-spec review
+**Status:** Confirmed — approved for implementation 2026-11-25
 
 ## Problem
 
