@@ -364,7 +364,7 @@ export const ARCHETYPE_MCP_SERVERS = {
 };
 
 export const MCP_SERVER_DEFS = {
-  atlassian: { url: 'https://mcp.atlassian.com/v1/sse' },
+  atlassian: { url: 'https://mcp.atlassian.com/v2/mcp' },
   figma: { url: 'http://127.0.0.1:3845/mcp' },
 };
 

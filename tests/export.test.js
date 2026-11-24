@@ -98,6 +98,7 @@ describe('exportPlugin', () => {
     await exportPlugin({ ...base(), commands: ['ko-onboard', 'ko-pr-creation'] }); // unlisted in resourceMap → shared
     let mcp = await fs.readJson(path.join(outDir, 'ko-dev', 'mcp.json'));
     expect(Object.keys(mcp.mcpServers)).toEqual(['atlassian']);
+    expect(mcp.mcpServers.atlassian.url).toBe('https://mcp.atlassian.com/v2/mcp');
 
     await exportPlugin({ ...base(), name: 'fe-pack', commands: ['ko-lib-package'] }); // fe-nx only
     mcp = await fs.readJson(path.join(outDir, 'fe-pack', 'mcp.json'));
@@ -133,5 +134,22 @@ describe('exportCommand --plugin', () => {
     expect(result.exported).toContain('agents/repo-explorer.md');
     expect(result.missing).not.toContain('agents/repo-explorer.md');
     expect(await fs.pathExists(path.join(outDir, 'ko-feature', 'agents', 'repo-explorer.md'))).toBe(true);
+  });
+
+  it('real single-command solution-design export ships every dependency', async () => {
+    const result = await exportCommand('ko-solution-design', templateDir, outDir, { plugin: true, author: AUTHOR });
+    expect(Array.isArray(result.exported), 'solution-design export did not produce an exported-file list').toBe(true);
+    expect(result.exported).toContain('agents/repo-explorer.md');
+    expect(result.exported).toContain('skills/workflow-refs/');
+    expect(result.missing).toEqual([]);
+    const root = path.join(outDir, 'ko-solution-design');
+    for (const rel of [
+      'commands/ko-solution-design.md',
+      'skills/workflow-refs/references/solution-design-workflow.md',
+      'skills/workflow-refs/references/solution-design-output.md',
+      'skills/workflow-refs/references/solution-design-followups.md',
+    ]) {
+      expect(await fs.pathExists(path.join(root, rel)), `missing exported ${rel}`).toBe(true);
+    }
   });
 });
