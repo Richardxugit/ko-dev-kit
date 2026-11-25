@@ -466,7 +466,7 @@ describe('ko-solution-design command contract', () => {
   });
 
   it('grounds requirements and Reuse/Adapt/New recommendations in repository evidence', () => {
-    for (const token of ['file:line', 'not evidenced', 'Reuse', 'Adapt', 'New', 'simplest', '2–3 options', 'unverified', 'Serverless Framework', 'non-AWS']) {
+    for (const token of ['file:line', 'not evidenced', 'Reuse', 'Adapt', 'New', 'simplest', '2–3 options', 'unverified', 'Serverless Framework', 'non-AWS', '10 targeted source files', 'named design decision', 'partial evidence', 'Stop expanding']) {
       expect(workflow, `missing workflow contract ${token}`).toContain(token);
     }
     expect(workflow).toContain('repo-explorer');
