@@ -109,3 +109,14 @@
 4. Push `feat/solution-design` with an explicit authenticated URL and no upstream token persistence.
 5. Create a PR to `main` with Summary, real Verification counts, and Limits for unexecuted plugin-specific integrations.
 6. Verify the PR exists and inspect its Actions/check runs; report the URL and honest final status.
+
+## Verification results
+
+- Static contract TDD: initial RED had 10 targeted failures plus 28 missing smoke resources; final suite has 320 passing tests and all seven smoke fixtures pass.
+- Distribution: real headless init/re-init, single-command export, and custom plugin export passed. All three references and `repo-explorer` are bundled; full plugin MCP uses Atlassian v2; existing user MCP content remains unchanged.
+- Quality gates: `pnpm dup-check` reports no unaccepted overlaps across 42 resources; `ko-solution-design` is 2,441/9,000 characters; diff check and changed-file CJK scan pass.
+- Dry-runs used three isolated real `ko-ui-lib` worktrees: non-AWS, AWS full-stack, and large design with explicit tickets. Initial runs proved that an unbounded recon could exhaust the run budget, so a RED→GREEN contract fix added the 10-file hard stop and named-decision-only follow-up reads.
+- Independent final reviewers APPROVED all revision-2 artifacts. Non-AWS resolved five findings, AWS resolved the partial-revoke dead-URL and HMAC rotation findings plus evidence wording, and the large design resolved seven diagram/contract findings while producing seven vertical-slice tickets.
+- Fresh-session revision produced revision 2 and `review.md`, updated only affected artifacts, and marked large tickets STALE without rewriting their source-revision-1 bodies. An unrelated sequence diagram remained byte-identical.
+- The missing-tool Confluence dry-run stopped with NOT PUBLISHED, made no remote call, simulated no payload or URL, and changed no files (verified by pre/post tree hash).
+- Limits: Mermaid was statically checked, not render-verified. AWS official draw.io generation and live Atlassian create/update/attachment operations were not executed because those integrations were unavailable in the dry-run environment. No Jira, Confluence, AWS, or production mutation was performed.
