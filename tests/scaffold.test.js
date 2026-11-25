@@ -115,6 +115,7 @@ describe('scaffoldProject', () => {
     const mcp = await fs.readJson(path.join(tmpDir, '.cursor', 'mcp.json'));
     // react-app contributes figma, nestjs-graphql contributes atlassian
     expect(Object.keys(mcp.mcpServers).sort()).toEqual(['atlassian', 'figma']);
+    expect(mcp.mcpServers.atlassian.url).toBe('https://mcp.atlassian.com/v2/mcp');
   });
 
   it('mcp.json is user-protected (never overwritten)', async () => {
@@ -122,10 +123,12 @@ describe('scaffoldProject', () => {
     const first = await fs.readJson(path.join(tmpDir, '.cursor', 'mcp.json'));
     expect(Object.keys(first.mcpServers)).toEqual(['atlassian']);
     first.mcpServers['my-own'] = { url: 'http://localhost:1234' };
+    first.mcpServers.atlassian.url = 'https://mcp.atlassian.com/v1/sse';
     await fs.writeJson(path.join(tmpDir, '.cursor', 'mcp.json'), first);
     const result = await scaffoldProject(tmpDir, ['react-app'], templateDir);
     const after = await fs.readJson(path.join(tmpDir, '.cursor', 'mcp.json'));
     expect(after.mcpServers['my-own']).toBeDefined();
+    expect(after.mcpServers.atlassian.url).toBe('https://mcp.atlassian.com/v1/sse');
     expect(result.skipped).toContain('.cursor/mcp.json');
   });
 

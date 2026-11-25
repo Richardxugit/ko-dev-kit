@@ -433,6 +433,81 @@ describe('anti-overengineering rules', () => {
   });
 });
 
+describe('ko-solution-design command contract', () => {
+  const commandPath = path.join(templateDir, 'commands', 'ko-solution-design.md');
+  const command = fs.pathExistsSync(commandPath) ? fs.readFileSync(commandPath, 'utf-8') : '';
+  const refsDir = path.join(templateDir, 'skills', 'workflow-refs', 'references');
+  const readRef = (name) => {
+    const file = path.join(refsDir, name);
+    return fs.pathExistsSync(file) ? fs.readFileSync(file, 'utf-8') : '';
+  };
+  const workflow = readRef('solution-design-workflow.md');
+  const output = readRef('solution-design-output.md');
+  const followups = readRef('solution-design-followups.md');
+
+  it('ships a universal four-intent command with no flags', () => {
+    expect(fs.pathExistsSync(commandPath), 'ko-solution-design.md is missing').toBe(true);
+    const { data } = parseFrontmatter(command);
+    expect(data?.name).toBe('ko-solution-design');
+    expect(data?.description).toMatch(/solution design|architecture/i);
+    expect(data?.agents).toEqual(['repo-explorer']);
+    for (const intent of ['<requirement>', 'revise <slug>', 'tickets <slug>', 'confluence <slug>']) {
+      expect(command, `missing positional intent ${intent}`).toContain(intent);
+    }
+    expect(command).not.toMatch(/\[--[a-z]/);
+    expect(MANUAL_INSTALL_COMMANDS).not.toContain('ko-solution-design');
+    expect(ARCHETYPE_RESOURCES.commands['ko-solution-design']).toBeUndefined();
+  });
+
+  it('initial design stops at DRAFT without implementation or follow-up side effects', () => {
+    for (const token of ['DRAFT', 'only', 'Do not generate `tickets.md`', 'Do not publish to Confluence', 'production code', 'deploy', 'Jira issues', 'never automatically chains']) {
+      expect(command, `missing initial-boundary token ${token}`).toContain(token);
+    }
+  });
+
+  it('grounds requirements and Reuse/Adapt/New recommendations in repository evidence', () => {
+    for (const token of ['file:line', 'not evidenced', 'Reuse', 'Adapt', 'New', 'simplest', '2–3 options', 'unverified', 'Serverless Framework', 'non-AWS', '10 targeted source files', 'named design decision', 'partial evidence', 'Stop expanding']) {
+      expect(workflow, `missing workflow contract ${token}`).toContain(token);
+    }
+    expect(workflow).toContain('repo-explorer');
+  });
+
+  it('defines durable artifacts, diagrams, and bounded large-design splitting', () => {
+    for (const token of ['README.md', 'design.md', 'parts/', 'review.md', 'tickets.md', 'context.mmd', 'sequenceDiagram', 'aws.mmd', 'aws.drawio', 'Mermaid', 'renderer', '250 lines', 'user-paced']) {
+      expect(output, `missing output contract ${token}`).toContain(token);
+    }
+  });
+
+  it('supports low-token fresh-session revision without losing review history', () => {
+    for (const token of ['fresh session', 'README.md', 'review.md', 'affected artifacts', 'increments the design revision', 'stale', 'does not eagerly load']) {
+      expect(followups, `missing revision contract ${token}`).toContain(token);
+    }
+  });
+
+  it('generates local vertical-slice tickets only on explicit intent', () => {
+    for (const token of ['tickets.md', 'vertical slices', 'AC-n', 'source design revision', 'does not create Jira', 'assignees', 'estimates']) {
+      expect(followups, `missing ticket contract ${token}`).toContain(token);
+    }
+  });
+
+  it('guards Confluence writes, attachments, and partial recovery', () => {
+    for (const token of ['official Atlassian MCP', 'getContentFormatGuide', 'snapshotToken', 'preview', 'confirmation', 'createConfluenceAttachment', 'generated diagram files', 'arbitrary local files', 'remote content changed', 'page ID', 'README.md']) {
+      expect(followups, `missing Confluence contract ${token}`).toContain(token);
+    }
+  });
+
+  it('cites all three progressive-disclosure references and documents the lifecycle', () => {
+    for (const name of ['solution-design-workflow.md', 'solution-design-output.md', 'solution-design-followups.md']) {
+      expect(command, `command does not cite ${name}`).toContain(`.cursor/skills/workflow-refs/references/${name}`);
+      expect(fs.pathExistsSync(path.join(refsDir, name)), `${name} is missing`).toBe(true);
+    }
+    const readme = fs.readFileSync(path.resolve('README.md'), 'utf-8');
+    for (const token of ['/ko-solution-design', 'DRAFT', 'revise', 'tickets', 'confluence']) {
+      expect(readme, `README lost ${token}`).toContain(token);
+    }
+  });
+});
+
 describe('ko-pr-creation command contract', () => {
   const commandPath = path.join(templateDir, 'commands', 'ko-pr-creation.md');
   const command = fs.pathExistsSync(commandPath) ? fs.readFileSync(commandPath, 'utf-8') : '';

@@ -153,7 +153,7 @@ kit-managed files in place. Pass `--no-overwrite` to skip existing files entirel
 
 **Shared (`fe-nx`, `nestjs-graphql`, `design-system` — every archetype in this kit):**
 - rule: `coding-standards.mdc` (always applied)
-- commands: `ko-onboard`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-verify`
+- commands: `ko-onboard`, `ko-bugfix`, `ko-test`, `ko-review`, `ko-verify`, `ko-solution-design`
 - commands (all except design-system): `ko-feature`, `ko-spike`, `ko-implement`
 - agents: `code-reviewer`, `review-specialist`
 - hooks: `privacy-block`, `safety-guard` (+ `destructive-rules.json` policy), `grep-negative`, `context-usage`, `session-ledger`; settings: `cli.json` (`.cursor/mcp.json` is generated per archetype set — union of recommended servers)
@@ -188,6 +188,8 @@ flowchart LR
 `/ko-review` is the gate before PR. On the PR itself, Cursor's BugBot adds an automated
 bug pass on top — `/ko-review` reads its comments and dedupes against them.
 
+`/ko-solution-design` is an architecture-first alternative entry point, not an automatic stage in this loop. Its initial run stops at a DRAFT design. Only the explicit `revise`, `tickets`, and `confluence` intents perform those follow-ups; it never implements, deploys, or creates Jira issues.
+
 ## Commands reference
 
 ### Shared commands (`fe-nx` / `nestjs-graphql` / `design-system`)
@@ -201,6 +203,7 @@ bug pass on top — `/ko-review` reads its comments and dedupes against them.
 | `/ko-verify` | Run build/lint/tests and confirm they pass |
 | `/ko-pr-creation` | Preview logical commits, push safely, and create a PR with generated title/body |
 | `/ko-explain` | Explain a feature/flow/API or a finished change (PR/branch/range) — visual chat answer with mermaid diagrams + file:line citations; target inferred from args or session context, asks when both are absent |
+| `/ko-solution-design <requirement>` | Evidence-grounded full-stack architecture with Reuse/Adapt/New analysis, Mermaid/AWS views, and large-design splitting. Initial run writes only a DRAFT. Explicit follow-ups: `revise <slug>` applies feedback in any session, `tickets <slug>` writes local Jira-ready Markdown, and `confluence <slug>` previews then publishes through Atlassian MCP |
 
 ### Shared commands (`fe-nx` / `nestjs-graphql` only)
 | Command | Purpose |
