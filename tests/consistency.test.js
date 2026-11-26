@@ -473,7 +473,7 @@ describe('ko-solution-design command contract', () => {
   });
 
   it('defines durable artifacts, diagrams, and bounded large-design splitting', () => {
-    for (const token of ['README.md', 'design.md', 'parts/', 'review.md', 'tickets.md', 'context.mmd', 'sequenceDiagram', 'aws.mmd', 'aws.drawio', 'Mermaid', 'renderer', '250 lines', 'user-paced']) {
+    for (const token of ['README.md', 'design.md', 'parts/', 'review.md', 'tickets.md', 'context.mmd', 'sequenceDiagram', 'aws.mmd', 'aws.drawio', 'aws-architecture-diagram.md', 'Mermaid', 'renderer', '250 lines', 'user-paced']) {
       expect(output, `missing output contract ${token}`).toContain(token);
     }
   });
@@ -496,14 +496,34 @@ describe('ko-solution-design command contract', () => {
     }
   });
 
-  it('cites all three progressive-disclosure references and documents the lifecycle', () => {
-    for (const name of ['solution-design-workflow.md', 'solution-design-output.md', 'solution-design-followups.md']) {
+  it('cites all progressive-disclosure references and documents the lifecycle', () => {
+    for (const name of ['solution-design-workflow.md', 'solution-design-output.md', 'solution-design-followups.md', 'aws-architecture-diagram.md']) {
       expect(command, `command does not cite ${name}`).toContain(`.cursor/skills/workflow-refs/references/${name}`);
       expect(fs.pathExistsSync(path.join(refsDir, name)), `${name} is missing`).toBe(true);
     }
     const readme = fs.readFileSync(path.resolve('README.md'), 'utf-8');
     for (const token of ['/ko-solution-design', 'DRAFT', 'revise', 'tickets', 'confluence']) {
       expect(readme, `README lost ${token}`).toContain(token);
+    }
+  });
+
+  it('ships the AWS4 diagram playbook with verified icon catalogs and templates', () => {
+    const awsRef = readRef('aws-architecture-diagram.md');
+    for (const token of ['aws.drawio', 'resourceIcon', 'resIcon', 'strokeColor=#ffffff', 'strokeColor=none', 'aws-diagram/icons/', 'elasticsearch_service', 'never guess', 'aws-diagram/templates/', 'renderer']) {
+      expect(awsRef, `aws diagram playbook missing ${token}`).toContain(token);
+    }
+    const iconsDir = path.join(refsDir, 'aws-diagram', 'icons');
+    expect(fs.pathExistsSync(iconsDir), 'icon catalog directory missing').toBe(true);
+    const icons = fs.readdirSync(iconsDir).filter((f) => f.endsWith('.md'));
+    expect(icons.length, 'expected 9 icon catalog files').toBe(9);
+    for (const f of icons) {
+      const body = fs.readFileSync(path.join(iconsDir, f), 'utf-8');
+      expect(body, `${f} empty`).toMatch(/Service-level|Resource-level/);
+    }
+    const tmplDir = path.join(refsDir, 'aws-diagram', 'templates');
+    for (const t of ['serverless-rest-api.drawio', 'three-tier-web-app.drawio', 'event-driven-processing.drawio']) {
+      const body = fs.pathExistsSync(path.join(tmplDir, t)) ? fs.readFileSync(path.join(tmplDir, t), 'utf-8') : '';
+      expect(body, `template ${t} missing or empty`).toContain('<mxfile');
     }
   });
 });

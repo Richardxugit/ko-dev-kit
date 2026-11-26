@@ -8,7 +8,7 @@ design.md
 diagrams/
   context.mmd
   aws.mmd                 # AWS designs only
-  aws.drawio              # only with the actual AWS diagram capability
+  aws.drawio              # AWS designs only, official AWS4 icons
   sequence-<flow>.mmd
 parts/                    # large designs only
   <nn>-<boundary>.md
@@ -32,7 +32,7 @@ Start with `Status: DRAFT` and `Revision: 1`. Use `IN_REVIEW` when the user send
 - `sequence-<flow>.mmd` — Mermaid `sequenceDiagram` for the key flow and any materially different failure/retry flow.
 - `aws.mmd` — AWS resources, networking/trust boundaries, and data direction when AWS is relevant.
 - Add Mermaid `er` or state diagrams only when they clarify a real data or lifecycle decision.
-- `aws.drawio` — generate only when the AWS Deployments `aws-architecture-diagram` capability is actually available; use its official AWS4 icons and validation. Never hand in a fabricated draw.io file or claim this path ran without the capability.
+- `aws.drawio` — for AWS designs: generate with the official AWS4 icon set per `.cursor/skills/workflow-refs/references/aws-architecture-diagram.md`. Verify stencil names against its icon catalog; never guess, never hand in a fabricated draw.io file, and never claim it rendered without running a renderer.
 
 Every diagram needs a short text summary and must agree with the prose and source evidence. Use a real renderer before calling a diagram rendered or render-verified. If no renderer succeeds, report Mermaid source generation plus static checking only.
 
