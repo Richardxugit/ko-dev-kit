@@ -18,7 +18,7 @@ Act as a full-stack system architect. Optimize for the simplest design that sati
 
 1. **Resolve the requirement.** Use explicit args, then usable session context. Announce an inferred target in one line. Only when both are absent, ask for the requirement before repository exploration. Fetch every supplied ticket, page, ADR, API spec, or design link; never substitute a guessed summary.
 2. **Load project context.** Read `AGENTS.md`, matching `.cursor/rules/`, and only relevant stack skills/docs. Follow the workflow reference for requirements, bounded `repo-explorer` recon, Reuse/Adapt/New analysis, and option selection. Use the inline recon fallback if subagents are unavailable.
-3. **Design and self-review.** Produce the artifacts and diagrams required by the output reference. Ground existing-system claims in `file:line` evidence. Keep assumptions, unverified external facts, and open decisions explicit.
+3. **Design and self-review.** Produce the artifacts and diagrams required by the output reference. For AWS designs, generate `aws.drawio` per `.cursor/skills/workflow-refs/references/aws-architecture-diagram.md`. Ground existing-system claims in `file:line` evidence. Keep assumptions, unverified external facts, and open decisions explicit.
 4. **Return the executive summary.** Show status, recommended design, key reuse decisions, important trade-offs, artifact paths, and any large-design part index. For large designs, let the user pace deep dives.
 
 The initial status is **DRAFT only**. Do not generate `tickets.md`. Do not publish to Confluence. Never write production code, deploy infrastructure, create Jira issues, or mutate AWS. This command never automatically chains into `/ko-feature` or `/ko-implement`; the user decides what happens next.
